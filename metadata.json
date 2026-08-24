@@ -28,7 +28,7 @@
     "name": "Gemma3-4B-IT-Q4_K_M",
     "runtime": "llama.cpp",
     "quantization": "GGUF Q4_K_M",
-    "parameters_estimate": "4.3B",
+    "parameters_estimate": "3.9B",
     "packaging": "binary_bundle"
   },
   "_runtime": {

@@ -58,6 +58,8 @@ Un test sur 4 scénarios (22/08) a montré `gemma3:4b` se tromper de palier en d
 
 *Chiffres auto-rapportés, mesurés sur machine de développement — voir la note du template : les scores officiels sont mesurés par le profiler ADTC sur la machine d'évaluation standard (à exécuter, voir section suivante).*
 
+### Chiffres auto-rapportés (pipeline applicatif réel, Ollama)
+
 | Metric | Value |
 |---|---|
 | Machine | Laptop dev — Intel Core i5-13420H (13e gén.), **sans GPU dédié** (Intel UHD intégré uniquement), ~15,2 Gio RAM physique |
@@ -66,6 +68,20 @@ Un test sur 4 scénarios (22/08) a montré `gemma3:4b` se tromper de palier en d
 | Time to first token | ~29-36s après chargement — traitement du prompt à ~28 tokens/s sur des prompts RAG réels de 800 à 1200 tokens (contexte + historique + corpus inclus, pas un prompt court synthétique) |
 | Generation speed | ~8,9 tokens/s en décodage |
 | Latence totale (diagnostic complet, chargement + prompt + génération) | ~72-98s mesuré de bout en bout sur 8 exécutions réelles |
-| Thermal throttling | Non mesuré en interne — à obtenir via l'exécution officielle du profiler ADTC (`adtc-profiler`), voir ci-dessous |
 
-**Prochaine étape prévue pour ce rapport :** exécuter `adtc-profiler run --submission . --mode participant --output submission.json` pour obtenir les chiffres officiels (dont le thermal throttling, absent ci-dessus) et les substituer/compléter ici.
+### Chiffres officiels — `adtc-profiler` (mode participant, `--skip-accuracy`)
+
+Exécuté le 24/08/2026 sur la même machine (Intel i5-13420H, sans GPU dédié), avec le `.gguf` téléchargé par `download_model.sh` et `llama-bench`/`llama-cpp-python` (compilés depuis les sources officielles llama.cpp, CPU-only). Sortie complète : `submission.json` (committé dans ce repo pour traçabilité). `"measured_on": "participant_laptop"` — run valide.
+
+| Metric | Value |
+|---|---|
+| Environment | Intel i5-13420H, 15,2 Gio RAM, GPU: none, Ubuntu 24.04.4 LTS |
+| Generation speed | **8,94 tokens/s** — cohérent avec notre mesure auto-rapportée (~8,9 tokens/s) |
+| First token latency | **18,47s**, sur le prompt standard du profiler (512 tokens, `llama-bench -p 512 -n 128`) — plus court que notre "~29-36s" auto-rapporté car nos prompts RAG réels (800-1200 tokens, historique + corpus inclus) sont environ 2x plus longs que ce prompt de référence générique. Le débit de traitement du prompt est cohérent : 512 tokens / 18,47s ≈ 27,7 tokens/s ≈ nos ~28 tokens/s mesurés en conditions réelles. |
+| Peak RSS | **4 059,97 Mo** (~3,97 Gio) — légèrement supérieur à notre mesure Ollama (~3,65 Gio), probablement dû à un contexte alloué par défaut plus grand (`context_length: 131072` dans `model_info` vs `n_ctx=4096` utilisé en pratique dans notre pipeline Ollama) |
+| Steady-state RSS | 3 941,09 Mo (~3,85 Gio) |
+| **Thermal throttling** | **Non déclenché** (`throttled: false`) — pic CPU 57,6 % (p99), température cœur max **83,0 °C** |
+| Accuracy (lm-eval) | Non exécuté (`--skip-accuracy`, smoke test participant) — à lancer sans ce flag pour un score d'accuracy complet si nécessaire |
+| Params count mesuré | 3 880 099 328 (~3,9B) — `params_match: true` avec la déclaration `metadata.json` (corrigée de "4.3B" à "3.9B" après cette mesure : le 4.3B initial venait du paquet Ollama complet, qui inclut un projecteur de vision (mmproj) que nous n'utilisons jamais et que le `.gguf` texte seul ne contient pas) |
+
+**Conclusion pour la contrainte 8 Go :** RAM au pic mesurée par le profiler officiel (~3,97 Gio) cohérente avec notre propre mesure (~3,65-4,45 Gio selon ce qui est inclus) — dans les deux cas, largement dans le budget. Aucun throttling thermique observé.
