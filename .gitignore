@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Données (ne pas versionner les gros fichiers / images du dataset)
+data/*
+!data/.gitkeep
+*.sqlite
+*.db
+
+# Index vectoriels
+chroma/
+*.faiss
+*.index
+
+# Modèles Ollama (jamais versionnés)
+*.gguf
+
+# OS / éditeurs
+.DS_Store
+.idea/
+.vscode/
