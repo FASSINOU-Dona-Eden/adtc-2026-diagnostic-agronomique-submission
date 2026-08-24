@@ -80,7 +80,17 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.dataset_dir.exists():
-        raise SystemExit(f"Dataset introuvable : {args.dataset_dir}")
+        raise SystemExit(
+            f"Dataset introuvable : {args.dataset_dir}\n\n"
+            "Pour reproduire ce calcul, télécharger le dataset public "
+            "*Multispectral Potato Plants Images* (Butte, Vakanski, Duellman "
+            "et al., 2021 — University of Idaho) :\n"
+            "  https://www.webpages.uidaho.edu/vakanski/Multispectral_Images_Dataset.html\n"
+            "puis relancer avec --dataset-dir pointant vers le dossier téléchargé.\n\n"
+            "Le résultat déjà obtenu (corrélation r=0,89 avec les annotations, "
+            "9 scènes) est documenté dans REPORT.md et docs/cahier-des-charges.md "
+            "§6.2 — pas besoin de relancer ce script pour le consulter."
+        )
 
     # --- Étape 1 : NDVI par zone, pour les 9 scènes ---
     par_scene: dict[str, list[tuple[str, float]]] = {}
