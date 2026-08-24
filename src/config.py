@@ -54,8 +54,20 @@ RAG_TOP_K = 3
 # 75% classé "alerte" au lieu de "critique"). Conforme à la règle du
 # cahier des charges §4.3 : le LLM interprète, il ne calcule pas — la
 # classification est un calcul, donc elle ne lui revient pas.
-def classify_niveau(stress_ratio: float) -> str:
-    """Classe un ratio de stress (0.0-1.0) selon la grille de seuils du corpus."""
+def classify_niveau(stress_ratio: float, zones_totales: int | None = None) -> str:
+    """Classe un ratio de stress (0.0-1.0) selon la grille de seuils du corpus.
+
+    zones_totales=0 signifie qu'aucune zone n'a pu être mesurée (ex: panne
+    capteur, scan interrompu) — à distinguer de "0% de stress mesuré sur des
+    zones valides", qui est un vrai résultat "Normal". Cas découvert et
+    documenté via scripts/test_edge_cases.py : sans cette distinction, une
+    panne capteur était classée "Normal" — un faux négatif potentiel côté
+    opérateur (situation perçue comme saine alors qu'aucune mesure fiable
+    n'existe). Les 4 paliers existants (Normal/Vigilance/Alerte/Critique)
+    sont inchangés pour tout zones_totales != 0.
+    """
+    if zones_totales == 0:
+        return "Données insuffisantes"
     if stress_ratio <= 0.15:
         return "Normal"
     if stress_ratio <= 0.35:

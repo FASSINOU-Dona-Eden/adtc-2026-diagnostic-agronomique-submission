@@ -112,13 +112,15 @@ Source : https://www.webpages.uidaho.edu/vakanski/Multispectral_Images_Dataset.h
 ## 12. Statut du projet à la soumission
 
 - ✅ Pipeline complet fonctionnel hors-ligne (données réelles → RAG → LLM local)
-- ✅ Contrainte mémoire 8 Go vérifiée par mesure réelle, pas par estimation
+- ✅ Contrainte mémoire 8 Go vérifiée par mesure réelle, et confirmée par le profiler officiel ADTC (`submission.json`) — dont un thermal throttling jamais mesuré auparavant (aucun déclenchement observé)
 - ✅ Risque de stabilité mémoire identifié et corrigé structurellement
 - ✅ Corpus agronomique et données de mission validés pour la démo
 - ✅ Interface CLI fonctionnelle avec filet de sécurité pour la latence
 - ✅ Script NDVI bonus (calcul à partir des canaux bruts Red/NIR) : implémenté, méthode validée (r = 0,89 avec les annotations)
+- ✅ Structure conforme au template officiel ADTC (`metadata.json`, `download_model.sh`, `model/`, `REPORT.md` à la racine)
+- ✅ Testé sur 2 cas limites (donnée incomplète, requête RAG hors-domaine) — dégradation propre confirmée ; un faux négatif trouvé (panne capteur classée "Normal") a été corrigé (voir `REPORT.md`)
 - ⚠️ Répétitions en conditions réelles sur machine cible : à faire avant le jour J
 
 ---
 
-*Document compilé à partir de `docs/cahier-des-charges.md` (v3.0) — s'y référer pour le détail des décisions, du raisonnement et de la traçabilité complète.*
+*Document compilé à partir de `docs/cahier-des-charges.md` (v3.0) — s'y référer pour le détail des décisions, du raisonnement et de la traçabilité complète. Le document de référence exigé par le règlement ADTC (structure imposée, benchmarks officiels du profiler, tests de robustesse, essai de langue ouest-africaine) est `REPORT.md` à la racine du dépôt — le présent dossier reste la version narrative complète en français.*

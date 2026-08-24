@@ -14,7 +14,7 @@ Un opérateur terrain (agriculteur, agronome) rentre d'une mission drone sur une
 
 Une première approche (donner les photos aériennes à un modèle de vision pour qu'il juge lui-même le stress) a été **testée puis écartée** : les modèles de vision accessibles sur 8 Go ne discriminent pas fiablement le niveau de stress à partir d'une image brute. Le pipeline retenu s'appuie donc sur des **données pré-quantifiées** (calcul NDVI classique), et le LLM local se limite à ce qu'il fait bien : **interpréter et reformuler**.
 
-Le détail complet (contexte, tests de faisabilité, décisions, timeline) est dans le [cahier des charges](docs/cahier-des-charges.md). Le [dossier de soumission](docs/dossier-de-soumission.md) en est la version compilée pour le jury.
+Le détail complet (contexte, tests de faisabilité, décisions, timeline) est dans le [cahier des charges](docs/cahier-des-charges.md). Le [dossier de soumission](docs/dossier-de-soumission.md) en est la version narrative compilée en français. **Le document exigé par le règlement ADTC** (structure imposée : Problem / Design Decisions / Constraints / Benchmarks, avec les chiffres officiels du profiler) est [`REPORT.md`](REPORT.md), à la racine.
 
 ## Architecture
 
@@ -40,11 +40,16 @@ Le pipeline repose sur trois briques, dans cet ordre :
 ```
 .
 ├── README.md                    # Ce fichier
+├── REPORT.md                    # Rapport technique exigé par le template ADTC (Problem/Design/Constraints/Benchmarks)
+├── metadata.json                # Métadonnées de soumission ADTC (domaine, modèle, test_prompts)
+├── download_model.sh            # Télécharge le .gguf public (gemma-3-4b-it Q4_K_M) requis par le profiler
+├── submission.json              # Sortie du profiler officiel ADTC (run réel, voir REPORT.md)
+├── model/                       # Reçoit le .gguf téléchargé (non versionné, voir .gitignore)
 ├── docs/
-│   ├── cahier-des-charges.md        # Spécification complète, décisions et raisonnement
-│   └── dossier-de-soumission.md     # Version compilée pour le jury
+│   ├── cahier-des-charges.md        # Journal de décisions complet, avec raisonnement
+│   └── dossier-de-soumission.md     # Version narrative compilée en français
 ├── src/                         # Code du pipeline
-│   ├── config.py                # Réglages centraux (modèle, chemins, seuils)
+│   ├── config.py                # Réglages centraux (modèle, chemins, seuils, classify_niveau)
 │   ├── models.py, db.py         # Historique des missions (SQLite)
 │   ├── seed_data.py             # Données réelles extraites du dataset (voir scripts/)
 │   ├── rag/                     # Vectorisation + recherche dans le corpus (ChromaDB)
@@ -54,6 +59,8 @@ Le pipeline repose sur trois briques, dans cet ordre :
 │   └── profiling.py             # Mesure RAM/latence
 ├── scripts/
 │   ├── extract_dataset_stress.py    # Extraction des ratios de stress réels (dataset Idaho)
+│   ├── compute_ndvi.py              # Calcul NDVI indépendant sur canaux bruts (bonus, r=0,89 avec les annotations)
+│   ├── test_edge_cases.py           # Tests de robustesse (donnée incomplète, RAG hors-domaine)
 │   └── profile_cpu_only.sh          # Profiling en forçant le CPU (sans GPU)
 ├── demo/                        # Diagnostics pré-générés (filet de sécurité démo)
 ├── data/                        # Données de mission & historique (non versionnées)
@@ -74,6 +81,17 @@ python -m src.rag.ingest      # vectorise le corpus agronomique
 python -m src.main --parcelle PARC-01          # un diagnostic (génération live, ~1 min)
 python -m src.main --parcelle PARC-04 --precalcule   # affichage instantané (filet de sécurité démo)
 python -m src.test_scenarios                    # plusieurs scénarios d'un coup
+
+PYTHONPATH=. python scripts/test_edge_cases.py   # cas limites (donnée incomplète, RAG hors-domaine)
+python scripts/compute_ndvi.py                   # validation NDVI indépendante (nécessite le dataset brut, voir Données)
+```
+
+### Vérifier la conformité au template ADTC
+
+```bash
+bash download_model.sh          # télécharge le .gguf public (~2,5 Go)
+pip install "git+https://github.com/Africa-Deep-Tech-Foundation/adtc-profiler.git"
+adtc-profiler run --submission . --mode participant --output submission.json --skip-accuracy
 ```
 
 ## Données
@@ -87,12 +105,15 @@ les auteurs), et non devinés par un modèle.
 
 - ✅ Cahier des charges finalisé, point 6 tranché (Bloc 1)
 - ✅ Données de mission réelles (extraites du dataset Idaho) et corpus agronomique validés (Bloc 2)
+- ✅ Script NDVI bonus implémenté et validé : corrélation r = 0,89 avec les annotations (`scripts/compute_ndvi.py`)
 - ✅ Pipeline technique bout-en-bout fonctionnel, données réelles, mémoire mesurée et conforme (Bloc 3)
 - ✅ Vérifié réellement hors-ligne (aucun appel réseau externe, tracé via `strace`)
 - ✅ Risque de stabilité mémoire sur générations successives corrigé structurellement (`keep_alive=0`)
 - ✅ Interface CLI fonctionnelle, avec filet de sécurité pour la latence (Bloc 4)
-- ✅ Dossier de soumission compilé (Bloc 5)
-- ⚠️ Script NDVI bonus : confirmé faisable, non implémenté faute de temps
+- ✅ Dossier de soumission compilé (Bloc 5) + `REPORT.md` conforme au template officiel ADTC
+- ✅ Structure de soumission ADTC complète : `metadata.json`, `download_model.sh`, `model/`, profiler officiel exécuté (`submission.json`) — dont un thermal throttling jamais mesuré auparavant (aucun déclenchement observé)
+- ✅ Testé sur 2 cas limites (donnée de mission incomplète, requête RAG hors-domaine) : dégradation propre confirmée. Un faux négatif trouvé (panne capteur classée "Normal") a été corrigé — voir `REPORT.md`
+- ⚠️ Essai d'une synthèse en langue ouest-africaine (haoussa) : tenté, abandonné suite à une hallucination confirmée — documenté honnêtement dans `REPORT.md`, non intégré au produit
 - ⚠️ Répétitions en conditions réelles sur machine cible : à faire avant le jour J
 
 ## Équipe

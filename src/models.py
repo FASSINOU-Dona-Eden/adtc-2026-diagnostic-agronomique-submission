@@ -31,8 +31,12 @@ class MissionReading:
 
     @property
     def niveau(self) -> str:
-        """Normal / Vigilance / Alerte / Critique — calculé, pas laissé au LLM."""
-        return classify_niveau(self.stress_ratio)
+        """Normal / Vigilance / Alerte / Critique — calculé, pas laissé au LLM.
+
+        "Données insuffisantes" si zones_totales == 0 (aucune zone mesurée,
+        ex: panne capteur) — distinct de "Normal" (0% de stress mesuré sur
+        des zones valides). Voir classify_niveau."""
+        return classify_niveau(self.stress_ratio, self.zones_totales)
 
 
 @dataclass

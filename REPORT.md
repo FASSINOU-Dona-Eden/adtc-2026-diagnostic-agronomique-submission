@@ -113,11 +113,24 @@ Exécuté le 24/08/2026 sur la même machine (Intel i5-13420H, sans GPU dédié)
 
 Les 4 scénarios de démo (Normal/Vigilance/Alerte/Critique) couvrent tous des données complètes. Deux cas limites supplémentaires ont été testés (`scripts/test_edge_cases.py`, reproductible : `PYTHONPATH=. python scripts/test_edge_cases.py`), pour vérifier une dégradation propre plutôt qu'un échec silencieux.
 
-### Cas 1 — donnée de mission incomplète (0 zone analysée, ex : panne capteur)
+### Cas 1 — donnée de mission incomplète (0 zone analysée, ex : panne capteur) — ✅ cas géré
 
-Une mission avec `zones_totales=0` (scan drone interrompu) a été injectée dans le pipeline. **Résultat : pas de plantage.** Le diagnostic généré reste prudent et cohérent : il signale explicitement l'absence de données exploitables plutôt que d'inventer un état de la parcelle, et recommande une inspection visuelle de vérification plutôt qu'une conclusion ferme.
+Une mission avec `zones_totales=0` (scan drone interrompu) a été injectée dans le pipeline. **Résultat : pas de plantage, et le faux négatif potentiel identifié lors du premier passage a été corrigé.**
 
-**Limite honnête découverte par ce test, non corrigée dans cette passe :** le code de classification (`classify_niveau`) traite `0 % de stress mesuré` et `0 zone analysée du tout` de façon identique — les deux sont classés `"Normal"`, alors que le second cas signifie *absence de mesure*, pas *absence de stress*. Le texte généré par le LLM compense partiellement ce biais en restant prudent dans sa formulation, mais ce n'est pas une garantie fiable — un futur correctif devrait distinguer explicitement "0 zone stressée sur N mesurées" de "0 zone mesurée au total" avant de classifier. Non corrigé ici pour ne pas modifier une logique déjà validée par le profiler et les 4 scénarios de démo sans couverture de test plus large.
+**Ce qui a été trouvé, puis corrigé.** Le code de classification (`classify_niveau`) traitait initialement `0 % de stress mesuré` et `0 zone analysée du tout` de façon identique — les deux étaient classés `"Normal"`, alors que le second cas signifie *absence de mesure* (ex : panne capteur), pas *absence de stress*. Risque concret : un opérateur pouvait percevoir une panne capteur comme une situation saine. Corrigé par un seul cas isolé et testé, sans toucher aux 4 paliers existants (`src/config.py::classify_niveau`) :
+
+```python
+def classify_niveau(stress_ratio: float, zones_totales: int | None = None) -> str:
+    if zones_totales == 0:
+        return "Données insuffisantes"
+    if stress_ratio <= 0.15:
+        return "Normal"
+    # ... paliers Vigilance/Alerte/Critique inchangés
+```
+
+Vérifié sans régression sur les 9 missions réelles des 4 scénarios de démo (niveaux identiques avant/après le correctif). Rejoué de bout en bout avec le LLM : le niveau remonte maintenant correctement comme `"Données insuffisantes"` dans le prompt, et le diagnostic généré recommande explicitement une vérification terrain plutôt que de laisser croire à une situation saine :
+
+> *"Le niveau de stress hydrique mesuré est de 'Données insuffisantes' pour déterminer un niveau précis (...) il est recommandé de réaliser une visite terrain rapprochée pour identifier tout signe visuel indiquant une pathologie ou un problème localisé (...)"*
 
 ### Cas 2 — requête RAG hors du domaine du corpus
 

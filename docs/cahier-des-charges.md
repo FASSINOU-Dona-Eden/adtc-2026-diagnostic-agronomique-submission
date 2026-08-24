@@ -7,6 +7,8 @@
 
 > **But de ce document.** Il est écrit pour être auto-suffisant : une équipe qui n'a assisté à aucune de nos discussions doit pouvoir le lire seul et exécuter le projet de A à Z. Chaque terme technique est expliqué au moins une fois. Chaque décision est justifiée pour qu'on ne la remette pas en cause à mi-parcours.
 
+> **Suite des travaux après ce document (post-migration vers le repo de soumission dédié).** Ce cahier des charges reste le journal de décisions jusqu'au Bloc 5 inclus. Les travaux de mise en conformité avec le template officiel ADTC (`metadata.json`, `download_model.sh`, `model/`, benchmarks du profiler officiel), les tests de robustesse sur cas limites (donnée incomplète, RAG hors-domaine — dont un correctif sur `classify_niveau`), et l'essai documenté d'une synthèse en langue ouest-africaine sont enregistrés directement dans **`REPORT.md`** à la racine du dépôt, le document exigé par le règlement ADTC.
+
 ---
 
 ## 1. Contexte et contrainte du concours
