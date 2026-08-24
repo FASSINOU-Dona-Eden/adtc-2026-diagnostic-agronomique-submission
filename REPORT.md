@@ -56,6 +56,14 @@ Le choix de "pré-calculer le stress par une méthode classique" (ci-dessus) n'e
 
 Un test sur 4 scénarios (22/08) a montré `gemma3:4b` se tromper de palier en dérivant lui-même la classification depuis le tableau de seuils du corpus (ex : 75 % classé "alerte" au lieu de "critique"). Corrigé en déplaçant ce calcul dans le code (`classify_niveau`, `tendance_globale`) et en l'imposant tel quel dans le prompt — le LLM ne recalcule plus, il reprend.
 
+### Alternative testée et abandonnée — synthèse bilingue en langue ouest-africaine
+
+Dans l'objectif de renforcer l'ancrage local du cas d'usage (au-delà du français), un essai a été fait pour demander à `gemma3:4b` (**sans changer de modèle, sans re-quantifier — le même `gemma3:4b` déjà validé par le profiler**) de produire, en plus du diagnostic français normal, une ligne de titre de synthèse en haoussa (langue la plus largement parlée en Afrique de l'Ouest parmi les options envisagées).
+
+**Résultat : hallucination, l'essai est abandonné.** Le modèle a produit la phrase *"Ƙarshen wasanni da amfani da shi don guwar karkashin kasa"*, présentée par le modèle lui-même comme signifiant "Il est important de l'utiliser pour améliorer les rendements." Vérification indépendante (dictionnaires haoussa en ligne) : `karshen wasanni` signifie littéralement "la fin des jeux/matchs", et `karkashin kasa` signifie "souterrain" (comme dans "métro") — une phrase grammaticalement construite avec de vrais mots haoussa, mais **sans aucun rapport de sens avec l'irrigation, le stress hydrique ou une recommandation agricole**. Le modèle n'a pas non plus suivi la consigne explicite de dire "langue non maîtrisée" en cas de doute — il a produit une réponse fausse avec la même confiance apparente qu'une réponse correcte.
+
+**Décision :** ne pas intégrer cette fonctionnalité. Forcer un résultat de mauvaise qualité en haoussa nuirait à la crédibilité du projet plus que son absence — conformément au principe déjà appliqué ailleurs dans ce projet (ex : abandon du VLM ci-dessus) de ne présenter que ce qui a été rigoureusement vérifié. Le diagnostic reste exclusivement en français, où la fiabilité du modèle est établie sur l'ensemble des tests de ce rapport.
+
 ---
 
 ## Constraints
