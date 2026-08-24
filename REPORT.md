@@ -18,6 +18,20 @@
 
 ---
 
+## Team & Context
+
+Ce projet dérive d'un des cas d'usage explorés pour les drones de Mawudo Aerospace : l'imagerie aérienne appliquée à l'agriculture de précision. Le développement d'un LLM local n'est pas le cœur de métier habituel de l'équipe (drones et matériel) ; ce concours a été l'occasion de développer la valeur exploitable des données déjà produites en aval d'une mission drone.
+
+Mawudo Aerospace est une structure de R&D flexible, pré-revenue, en développement de ses MVP (matériel et logiciel). Direction actuelle en place depuis fin Q1 2026. Enregistrement légal en Entreprise Individuelle depuis mai 2026.
+
+L'équipe a été complétée spécifiquement pour ce concours :
+
+- **Dona Eden Fassinou** — fondateur et CEO de Mawudo Aerospace, en charge de l'architecture du projet.
+- **Fresnel Satignon** — étudiant en software engineering, compétences en vision par ordinateur / machine learning / deep learning.
+- **Fifamè Heureuse Fassinou** — bachelière diplômée, Top 20 2026 des Olympiades Nationales d'IA du Bénin, intégrée à l'équipe sur la base de ces résultats.
+
+---
+
 ## Design Decisions
 
 ### Modèle de base et quantization
