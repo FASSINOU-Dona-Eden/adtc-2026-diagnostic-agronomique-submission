@@ -1,0 +1,37 @@
+{
+  "team_id": "TODO-team-id-portail-ADTF",
+  "domain": "agriculture",
+  "language_scope": ["fr"],
+  "african_alpha_claim": false,
+  "budget_laptop_claim": true,
+  "submitter": {
+    "name": "Dona Eden Fassinou",
+    "email": "donaedenfassinou@gmail.com",
+    "github_handle": "FASSINOU-Dona-Eden"
+  },
+  "cross_disciplinary_pairing": {
+    "discipline": "télédétection agricole (imagerie multispectrale par drone)",
+    "load_bearing": true,
+    "description": "Le diagnostic ne se limite pas à une reformulation de texte agronomique générique : les données de stress hydrique proviennent de l'extraction d'un dataset scientifique de télédétection (bounding boxes healthy/stressed sur imagerie multispectrale Red/NIR, Butte et al. 2021), et le calcul NDVI = (NIR-Red)/(NIR+Red) est reproduit directement sur les canaux bruts (scripts/compute_ndvi.py, corrélation r=0,89 avec les annotations). Le LLM local se limite ensuite à interpréter ces mesures déjà quantifiées."
+  },
+  "test_prompts": [
+    {
+      "prompt_id": "tp_001",
+      "prompt": "Tu es un assistant agronomique qui aide un opérateur terrain à interpréter les résultats d'une mission drone sur une parcelle de pomme de terre. Tu ne reçois jamais d'image, uniquement des chiffres déjà calculés, et tu n'inventes aucun chiffre absent du contexte fourni. Données de la mission : stress hydrique actuel 54,5 % des zones (6 zones stressées sur 11), en hausse de 21,2 points par rapport à la mission précédente (33,3 %), tendance de dégradation continue observée sur les 3 dernières missions. Grille de seuils : 0-15 % Normal, 15-35 % Vigilance, 35-60 % Alerte, plus de 60 % Critique. Rédige un diagnostic clair, en français, se terminant par une recommandation actionnable concrète pour l'opérateur."
+    },
+    {
+      "prompt_id": "tp_002",
+      "prompt": "Même contexte : assistant agronomique interprétant les résultats d'une mission drone sur une parcelle de pomme de terre, sans jamais inventer de chiffre absent du contexte. Données de la mission : stress hydrique actuel 77,8 % des zones (7 zones stressées sur 9), en hausse de 20,7 points par rapport à la mission précédente (57,1 %, relevée lors d'une vague de chaleur prolongée). Grille de seuils : 0-15 % Normal, 15-35 % Vigilance, 35-60 % Alerte, plus de 60 % Critique. Rédige un diagnostic clair, en français, se terminant par une recommandation actionnable concrète adaptée à un niveau critique."
+    }
+  ],
+  "model": {
+    "name": "Gemma3-4B-IT-Q4_K_M",
+    "runtime": "llama.cpp",
+    "quantization": "GGUF Q4_K_M",
+    "parameters_estimate": "4.3B",
+    "packaging": "binary_bundle"
+  },
+  "_runtime": {
+    "model_path": "model/gemma-3-4b-it-Q4_K_M.gguf"
+  }
+}

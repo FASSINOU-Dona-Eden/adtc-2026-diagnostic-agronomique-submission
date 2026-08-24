@@ -17,8 +17,10 @@ chroma/
 *.faiss
 *.index
 
-# Modèles Ollama (jamais versionnés)
+# Modèles (jamais versionnés — téléchargés via download_model.sh)
 *.gguf
+model/*
+!model/.gitkeep
 
 # OS / éditeurs
 .DS_Store
