@@ -85,3 +85,21 @@ Exécuté le 24/08/2026 sur la même machine (Intel i5-13420H, sans GPU dédié)
 | Params count mesuré | 3 880 099 328 (~3,9B) — `params_match: true` avec la déclaration `metadata.json` (corrigée de "4.3B" à "3.9B" après cette mesure : le 4.3B initial venait du paquet Ollama complet, qui inclut un projecteur de vision (mmproj) que nous n'utilisons jamais et que le `.gguf` texte seul ne contient pas) |
 
 **Conclusion pour la contrainte 8 Go :** RAM au pic mesurée par le profiler officiel (~3,97 Gio) cohérente avec notre propre mesure (~3,65-4,45 Gio selon ce qui est inclus) — dans les deux cas, largement dans le budget. Aucun throttling thermique observé.
+
+---
+
+## Tests de robustesse — cas limites
+
+Les 4 scénarios de démo (Normal/Vigilance/Alerte/Critique) couvrent tous des données complètes. Deux cas limites supplémentaires ont été testés (`scripts/test_edge_cases.py`, reproductible : `PYTHONPATH=. python scripts/test_edge_cases.py`), pour vérifier une dégradation propre plutôt qu'un échec silencieux.
+
+### Cas 1 — donnée de mission incomplète (0 zone analysée, ex : panne capteur)
+
+Une mission avec `zones_totales=0` (scan drone interrompu) a été injectée dans le pipeline. **Résultat : pas de plantage.** Le diagnostic généré reste prudent et cohérent : il signale explicitement l'absence de données exploitables plutôt que d'inventer un état de la parcelle, et recommande une inspection visuelle de vérification plutôt qu'une conclusion ferme.
+
+**Limite honnête découverte par ce test, non corrigée dans cette passe :** le code de classification (`classify_niveau`) traite `0 % de stress mesuré` et `0 zone analysée du tout` de façon identique — les deux sont classés `"Normal"`, alors que le second cas signifie *absence de mesure*, pas *absence de stress*. Le texte généré par le LLM compense partiellement ce biais en restant prudent dans sa formulation, mais ce n'est pas une garantie fiable — un futur correctif devrait distinguer explicitement "0 zone stressée sur N mesurées" de "0 zone mesurée au total" avant de classifier. Non corrigé ici pour ne pas modifier une logique déjà validée par le profiler et les 4 scénarios de démo sans couverture de test plus large.
+
+### Cas 2 — requête RAG hors du domaine du corpus
+
+Une requête volontairement hors-sujet ("traitement des maladies fongiques du blé, rouille jaune") a été envoyée à la recherche vectorielle. **Résultat : pas de plantage, réponse finale cohérente et sur le sujet de la mission (stress hydrique).**
+
+**Nuance honnête sur ce que ce test prouve réellement :** le corpus actuel ne couvre qu'un seul domaine (stress hydrique de la pomme de terre) — il ne contient donc structurellement aucun contenu vraiment hors-sujet à retourner par erreur. La requête hors-domaine a bien renvoyé des distances vectorielles élevées (1,02 à 1,20, contre des distances plus faibles observées sur des requêtes on-topic), ce qui montre que le signal de pertinence est correct au niveau de la recherche — mais comme il n'existe aucun seuil de coupure sur cette distance dans `src/rag/retrieve.py` (les `top_k` passages sont toujours injectés, pertinents ou non), ce test ne peut pas démontrer que le système *rejetterait* un vrai contenu hors-sujet si le corpus en contenait. Le fait que la réponse finale reste cohérente ici tient surtout à ce que les passages retournés (mêmes hors-sujet pour la requête) restent malgré tout pertinents pour la mission elle-même (même corpus, même culture). Un corpus multi-domaine serait nécessaire pour tester ce cas plus rigoureusement — hors du scope de cette passe.
