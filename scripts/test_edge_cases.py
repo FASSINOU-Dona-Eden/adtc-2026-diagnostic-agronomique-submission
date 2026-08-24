@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""Teste deux cas limites que les 4 scénarios de démo (Normal/Vigilance/
-Alerte/Critique) ne couvrent pas : une donnée de mission incomplète, et
-une requête RAG qui ne trouve rien de pertinent dans le corpus.
+"""Tests two edge cases that the 4 demo scenarios (Normal/Vigilance/
+Alert/Critical) do not cover: an incomplete mission reading, and
+a RAG query that finds nothing relevant in the corpus.
 
-Objectif : prouver que le pipeline dégrade proprement (message clair,
-pas de plantage, pas d'hallucination fabriquée à partir d'un contexte
-non pertinent) plutôt que d'échouer silencieusement. Résultats
-documentés dans REPORT.md.
+Goal: prove that the pipeline degrades cleanly (clear message,
+no crash, no hallucination fabricated from irrelevant context)
+rather than failing silently. Results documented in REPORT.md.
 
-Ce script est un outil de vérification, pas un test automatisé au sens
-pytest — la lecture humaine du texte généré reste nécessaire pour juger
-si le modèle "invente" ou pas.
+This script is a verification tool, not an automated test in the
+pytest sense — human review of the generated text is still needed to
+judge whether the model is "inventing" things or not.
 
-Usage : python scripts/test_edge_cases.py
+Usage: python scripts/test_edge_cases.py
 """
 
 from datetime import date
@@ -25,11 +24,11 @@ from src.rag.retrieve import retrieve
 
 
 def cas_donnee_incomplete() -> None:
-    """Mission avec 0 zone analysée (ex: scan drone interrompu par une
-    panne capteur) — teste si le pipeline gère une donnée dégénérée
-    (zones_totales=0) sans planter ni inventer un pourcentage."""
+    """Mission with 0 zones analyzed (e.g. drone scan interrupted by a
+    sensor failure) — tests whether the pipeline handles degenerate data
+    (zones_totales=0) without crashing or inventing a percentage."""
     print("=" * 70)
-    print("CAS LIMITE 1 — donnée de mission incomplète (0 zone analysée)")
+    print("EDGE CASE 1 — incomplete mission reading (0 zones analyzed)")
     print("=" * 70)
 
     init_db()
@@ -37,56 +36,56 @@ def cas_donnee_incomplete() -> None:
         mission_id="M-EDGE-001",
         parcelle_id="PARC-EDGE-INCOMPLET",
         date=date(2026, 8, 20),
-        culture="Pomme de terre",
+        culture="Potato",
         stress_ratio=0.0,
         zones_stressees=0,
         zones_totales=0,
-        notes="Scan interrompu après 2 minutes de vol — panne capteur multispectral, aucune zone analysée.",
+        notes="Scan interrupted after 2 minutes of flight — multispectral sensor failure, no zone analyzed.",
     )
     insert_mission(mission)
     historique = get_historique("PARC-EDGE-INCOMPLET")
 
-    print(f"Niveau calculé par le code : {mission.niveau}")
-    print(f"stress_pct calculé : {mission.stress_pct}%  (0/0 zones)")
+    print(f"Level computed by the code: {mission.niveau}")
+    print(f"Computed stress_pct: {mission.stress_pct}%  (0/0 zones)")
 
-    passages = retrieve("stress hydrique pomme de terre 0% seuils recommandations")
+    passages = retrieve("potato water stress 0% thresholds recommendations")
     prompt = build_prompt(mission, historique, passages)
-    print("\n--- Prompt envoyé au LLM (extrait mission) ---")
-    print(prompt.split("## Historique")[0])
+    print("\n--- Prompt sent to the LLM (mission excerpt) ---")
+    print(prompt.split("## History")[0])
 
     result = generate_diagnostic(prompt)
-    print("\n--- Diagnostic généré ---")
+    print("\n--- Generated diagnosis ---")
     print(result.text)
-    print(f"\n(latence : {result.latency_s:.1f}s)")
+    print(f"\n(latency: {result.latency_s:.1f}s)")
 
 
 def cas_rag_hors_domaine() -> None:
-    """Requête RAG explicitement hors du domaine couvert par le corpus
-    (maladie fongique du blé — le corpus ne couvre que le stress
-    hydrique de la pomme de terre) — teste si le LLM signale que le
-    contexte ne couvre pas la question plutôt que d'improviser une
-    réponse à partir de passages non pertinents."""
+    """RAG query explicitly outside the corpus's domain
+    (wheat fungal disease — the corpus only covers potato water
+    stress) — tests whether the LLM flags that the context does not
+    cover the question rather than improvising an answer from
+    irrelevant passages."""
     print("\n" + "=" * 70)
-    print("CAS LIMITE 2 — requête RAG hors du domaine du corpus")
+    print("EDGE CASE 2 — RAG query outside the corpus's domain")
     print("=" * 70)
 
-    requete_hors_domaine = "traitement des maladies fongiques du blé, rouille jaune"
+    requete_hors_domaine = "wheat fungal disease treatment, yellow rust"
     passages = retrieve(requete_hors_domaine)
 
-    print(f"Requête : {requete_hors_domaine!r}")
-    print("Passages retournés par ChromaDB (top-k, pas de seuil de pertinence) :")
+    print(f"Query: {requete_hors_domaine!r}")
+    print("Passages returned by ChromaDB (top-k, no relevance threshold):")
     for p in passages:
         print(f"  - [{p['source']}] distance={p['distance']:.3f}")
         print(f"    {p['text'][:100]}...")
 
-    # On combine ces passages hors-sujet avec une vraie mission, pour voir
-    # si le LLM les utilise à tort ou reconnaît qu'ils ne répondent pas
-    # à la question posée sur le stress hydrique.
+    # Combine these off-topic passages with a real mission, to see
+    # whether the LLM misuses them or recognizes that they don't answer
+    # the question asked about water stress.
     mission = MissionReading(
         mission_id="M-EDGE-002",
         parcelle_id="PARC-EDGE-RAG",
         date=date(2026, 8, 21),
-        culture="Pomme de terre",
+        culture="Potato",
         stress_ratio=0.45,
         zones_stressees=9,
         zones_totales=20,
@@ -97,13 +96,13 @@ def cas_rag_hors_domaine() -> None:
     historique = get_historique("PARC-EDGE-RAG")
     prompt = build_prompt(mission, historique, passages)
 
-    print("\n--- Contexte RAG injecté dans le prompt (hors-sujet, volontairement) ---")
+    print("\n--- RAG context injected into the prompt (off-topic, on purpose) ---")
     print(_format_rag_context(passages)[:300], "...")
 
     result = generate_diagnostic(prompt)
-    print("\n--- Diagnostic généré (avec un contexte RAG hors-sujet) ---")
+    print("\n--- Generated diagnosis (with an off-topic RAG context) ---")
     print(result.text)
-    print(f"\n(latence : {result.latency_s:.1f}s)")
+    print(f"\n(latency: {result.latency_s:.1f}s)")
 
 
 if __name__ == "__main__":

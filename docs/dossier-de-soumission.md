@@ -1,126 +1,126 @@
-# Dossier de soumission — Assistant de diagnostic agronomique post-vol
+# Submission Dossier — Post-Flight Agronomic Diagnostic Assistant
 
 **Mawudo Aerospace × Africa Deep Tech Challenge 2026**
-**Compilé le 24 août 2026** à partir des décisions actées dans `docs/cahier-des-charges.md` (v3.0).
+**Compiled on August 24, 2026** from the decisions recorded in `docs/cahier-des-charges.md` (v3.0).
 
 ---
 
-## 1. Résumé
+## 1. Summary
 
-Un opérateur terrain (agriculteur, agronome) rentre d'une mission drone sur une parcelle. L'outil prend ses **données de stress hydrique déjà mesurées** et les transforme en un **diagnostic clair, en langage naturel**, enrichi par l'historique des missions précédentes sur la même parcelle — le tout **100 % hors-ligne**, sur un laptop grand public à **8 Go de RAM**, sans GPU dédié.
+A field operator (farmer, agronomist) returns from a drone mission over a plot. The tool takes their **already-measured water stress data** and turns it into a **clear, natural-language diagnosis**, enriched with the history of previous missions on the same plot — all **100% offline**, on a consumer laptop with **8 GB of RAM**, with no dedicated GPU.
 
 ---
 
-## 2. Contexte et contrainte du concours
+## 2. Context and contest constraint
 
-L'Africa Deep Tech Challenge 2026 demande une application basée sur un modèle de langage (LLM) capable de tourner entièrement hors-ligne, sur un laptop grand public équipé de 8 Go de RAM, sans dépendance à une connexion internet ou à une API cloud.
+The Africa Deep Tech Challenge 2026 calls for an application based on a language model (LLM) able to run entirely offline, on a consumer laptop equipped with 8 GB of RAM, with no dependency on an internet connection or a cloud API.
 
-L'évaluation du jury porte sur quatre axes : le choix et l'optimisation du modèle (quantization), la gestion mémoire et latence, l'usage du RAG (recherche documentaire locale), et l'utilité réelle du cas d'usage. Ce dossier répond aux quatre.
+The judges' evaluation covers four axes: model choice and optimization (quantization), memory and latency management, use of RAG (local document retrieval), and the real-world usefulness of the use case. This dossier addresses all four.
 
-## 3. Cas d'usage retenu
+## 3. Chosen use case
 
-**Assistant de diagnostic agronomique post-vol.** L'application ne « regarde » pas les photos pour juger le stress — elle reçoit des chiffres déjà calculés (ratio de zones stressées) et son travail est de les **interpréter et reformuler** en un diagnostic actionnable, enrichi par le contexte historique et documentaire local.
+**Post-flight agronomic diagnostic assistant.** The application does not "look at" photos to judge stress — it receives figures that are already computed (stressed-zone ratio) and its job is to **interpret and rephrase** them into an actionable diagnosis, enriched by local historical and documentary context.
 
-## 4. Démarche : ce qui a été testé et écarté
+## 4. Approach: what was tested and discarded
 
-Une première approche, plus ambitieuse, envisageait un modèle de vision (VLM) analysant directement les photos aériennes pour juger lui-même le niveau de stress. Elle a été **testée rigoureusement puis écartée**, sur la base de résultats mesurés — pas d'une hypothèse :
+An initial, more ambitious approach considered a vision model (VLM) directly analyzing aerial photos to judge the stress level itself. It was **rigorously tested then discarded**, based on measured results — not a hypothesis:
 
-| Modèle | Format de réponse | Résultat |
+| Model | Response format | Result |
 |---|---|---|
-| Gemma 3 4B | Pourcentage libre (0-100 %) | Réponses bloquées entre 45-65 %, aucune corrélation avec le réel |
-| Qwen3-VL 8B | Pourcentage libre (0-100 %) | Réponses bloquées entre 25-30 %, aucune corrélation ; échecs de convergence sur certaines images |
-| Qwen3-VL 8B | Classification en 4 catégories | 1/6 correct (17 % d'accord avec la vérité-terrain) |
-| Contrôle humain | Classification en 4 catégories, à l'aveugle | 4/6 correct (67 % d'accord) |
+| Gemma 3 4B | Free-form percentage (0-100%) | Responses clustered between 45-65%, no correlation with ground truth |
+| Qwen3-VL 8B | Free-form percentage (0-100%) | Responses clustered between 25-30%, no correlation; convergence failures on some images |
+| Qwen3-VL 8B | 4-category classification | 1/6 correct (17% agreement with ground truth) |
+| Human control | 4-category classification, blind | 4/6 correct (67% agreement) |
 
-Protocole : 6 images du dataset *Multispectral Potato Plants Images* (Butte, Vakanski, Duellman et al., 2021 — University of Idaho), choisies pour couvrir tout le spectre de stress annoté (33 % à 85 %).
+Protocol: 6 images from the dataset *Multispectral Potato Plants Images* (Butte, Vakanski, Duellman et al., 2021 — University of Idaho), chosen to cover the full annotated stress spectrum (33% to 85%).
 
-**Conclusion :** les modèles de vision locaux accessibles sur un laptop 8 Go ne discriminent pas fiablement le niveau de stress à partir d'une image brute. L'approche est écartée au profit d'un pipeline où le stress est **pré-calculé de façon classique**, et où le LLM se limite à l'interprétation — tâche sur laquelle il est performant.
+**Conclusion:** local vision models available on an 8 GB laptop do not reliably discriminate stress level from a raw image. The approach is discarded in favor of a pipeline where stress is **pre-computed classically**, and where the LLM sticks to interpretation — a task it performs well.
 
-*Nuance honnête, assumée devant le jury : la vérité-terrain de 2021 elle-même n'est pas parfaite (dérive de jugement possible au fil de l'annotation). Cela nuance le résultat sans l'invalider — l'écart entre humain de contrôle et modèles testés reste net.*
+*Honest nuance, owned in front of the judges: the 2021 ground truth itself is not perfect (possible judgment drift over the course of annotation). This nuances the result without invalidating it — the gap between the human control and the tested models remains clear.*
 
-## 5. Architecture retenue
+## 5. Chosen architecture
 
-Le pipeline repose sur trois briques, dans cet ordre :
+The pipeline rests on three components, in this order:
 
-1. **Traitement des données de mission** — ratio de stress hydrique par zone, obtenu par traitement classique (chaîne NDVI, §7), pas par IA générative.
-2. **Base de connaissances locale (RAG)** — deux sources consultées localement, sans connexion :
-   - Historique des missions précédentes sur la même parcelle (SQLite) — permet des diagnostics du type « le stress a augmenté de X points depuis la dernière mission ».
-   - Corpus agronomique de référence — fiches sur le stress hydrique par culture, seuils d'alerte, recommandations d'irrigation.
-3. **Génération du diagnostic (LLM local)** — le modèle reformule les données quantifiées + le contexte RAG en un diagnostic clair et actionnable. **Ce qu'il ne fait pas** : il n'analyse aucune image, il n'apprend rien, il ne calcule pas le stress — il interprète et rédige.
+1. **Mission data processing** — water stress ratio per zone, obtained through classical processing (NDVI chain, §7), not generative AI.
+2. **Local knowledge base (RAG)** — two sources consulted locally, without a connection:
+   - History of previous missions on the same plot (SQLite) — enables diagnoses like "stress has increased by X points since the last mission."
+   - Reference agronomic corpus — sheets on water stress by crop, alert thresholds, irrigation recommendations.
+3. **Diagnosis generation (local LLM)** — the model rephrases the quantified data + the RAG context into a clear, actionable diagnosis. **What it does not do**: it never analyzes an image, it learns nothing, it does not compute the stress — it interprets and writes.
 
-## 6. Stack technique
+## 6. Tech stack
 
-| Composant | Choix |
+| Component | Choice |
 |---|---|
-| Moteur d'inférence local | Ollama (llama.cpp) |
-| Modèle de langage | **Gemma 3 4B (`gemma3:4b`)** — voir §8 pour la justification |
-| Stockage historique | SQLite |
-| Recherche vectorielle (RAG) | ChromaDB |
-| Modèle d'embedding | `all-MiniLM-L6-v2` (léger, tourne bien en CPU/8 Go) |
-| Langage | Python |
-| Interface de démo | CLI (voir §10) |
+| Local inference engine | Ollama (llama.cpp) |
+| Language model | **Gemma 3 4B (`gemma3:4b`)** — see §8 for the justification |
+| History storage | SQLite |
+| Vector search (RAG) | ChromaDB |
+| Embedding model | `all-MiniLM-L6-v2` (lightweight, runs well on CPU/8 GB) |
+| Language | Python |
+| Demo interface | CLI (see §10) |
 
-## 7. Source des données : méthode et transparence
+## 7. Data source: method and transparency
 
-**Ce qui est réel.** Les valeurs de stress hydrique utilisées dans la démo sont extraites des annotations du dataset scientifique *Multispectral Potato Plants Images* (Butte, Vakanski, Duellman et al., 2021 — University of Idaho) : chaque scène est annotée par des bounding boxes classant chaque plant `healthy` ou `stressed`, et le ratio de stress se déduit directement par comptage (`stressed / total`). Extraction reproductible : `scripts/extract_dataset_stress.py`.
+**What is real.** The water stress values used in the demo are extracted from the annotations of the scientific dataset *Multispectral Potato Plants Images* (Butte, Vakanski, Duellman et al., 2021 — University of Idaho): each scene is annotated with bounding boxes classifying each plant as `healthy` or `stressed`, and the stress ratio is derived directly by counting (`stressed / total`). Reproducible extraction: `scripts/extract_dataset_stress.py`.
 
-**Ce qui est construit pour la démo, et doit être dit comme tel.** Le dataset ne contient **aucun suivi longitudinal du même point dans le temps** (pas d'identifiant de parcelle, pas de date de capture dans ses métadonnées). Le regroupement de plusieurs scènes réelles en « missions successives sur une même parcelle » (dates assignées, séquençage) est une **construction de démonstration**, pas une série temporelle terrain authentique.
+**What is constructed for the demo, and must be stated as such.** The dataset contains **no longitudinal tracking of the same point over time** (no plot identifier, no capture date in its metadata). Grouping several real scenes into "successive missions on the same plot" (assigned dates, sequencing) is a **demonstration construct**, not an authentic field time series.
 
-> **À dire explicitement au jury, sans attendre la question :** les mesures individuelles de stress sont réelles et sourcées ; leur mise en scène en historique de parcelle est un montage pédagogique qui permet de démontrer la fonctionnalité RAG « historique + évolution », que le dataset seul ne permet pas d'illustrer autrement dans le temps imparti.
+> **To state explicitly to the judges, without waiting to be asked:** the individual stress measurements are real and sourced; their staging into a plot history is a pedagogical construct that demonstrates the RAG "history + evolution" feature, which the dataset alone does not allow illustrating otherwise within the time available.
 
-**D'où viennent les pourcentages — la chaîne NDVI.** Un vrai relevé de stress hydrique par drone suit cette chaîne : caméra multispectrale (capte le proche infrarouge) → une plante stressée réfléchit moins d'infrarouge qu'une plante saine → calcul du NDVI (indice comparant infrarouge et rouge réfléchis) → seuillage par zone → ratio final de zones stressées. Les auteurs du dataset ont réalisé cette chaîne ; nous récupérons leur résultat final (via les annotations `healthy`/`stressed`) sans le recalculer — méthode identique dans son principe à celle d'un vrai drone multispectral.
+**Where the percentages come from — the NDVI chain.** A real drone-based water stress reading follows this chain: multispectral camera (captures near-infrared) → a stressed plant reflects less infrared than a healthy one → NDVI computation (an index comparing reflected infrared and red) → per-zone thresholding → final ratio of stressed zones. The dataset's authors carried out this chain; we retrieve their final result (via the `healthy`/`stressed` annotations) without recomputing it — a method identical in principle to that of a real multispectral drone.
 
-**Preuve de maîtrise de la méthode.** `scripts/compute_ndvi.py` recalcule le NDVI = (NIR - Red)/(NIR + Red) directement sur les canaux spectraux bruts du dataset, par zone, pour les 9 scènes utilisées dans la démo — et compare le résultat au ratio des annotations déjà utilisé. Corrélation mesurée : **r = 0,89** (écart absolu moyen 8,7 points de %), NDVI moyen des zones `healthy` (0,447) nettement supérieur à celui des zones `stressed` (0,333) — sens attendu. Une scène s'écarte nettement (stress léger visible pour l'annotateur humain, peu marqué au niveau du NDVI moyen de zone) — assumé et détaillé en §6.2 du cahier des charges plutôt que dissimulé.
+**Proof of method mastery.** `scripts/compute_ndvi.py` recomputes NDVI = (NIR - Red)/(NIR + Red) directly on the dataset's raw spectral channels, per zone, for the 9 scenes used in the demo — and compares the result to the annotation ratio already in use. Measured correlation: **r = 0.89** (mean absolute gap 8.7 percentage points), average NDVI of `healthy` zones (0.447) clearly higher than that of `stressed` zones (0.333) — expected direction. One scene deviates notably (mild stress visible to the human annotator, weakly reflected in the zone's average NDVI) — acknowledged and detailed in §6.2 of the specification document rather than hidden.
 
-## 8. Modèle LLM : choix et justification
+## 8. LLM model: choice and justification
 
-**`gemma3:4b`, confirmé après comparaison directe.** `gemma3:1b` a été testé et rejeté : il hallucine des chiffres absents du contexte fourni (3/3 tests). `gemma3:4b` tient dans l'enveloppe mémoire visée et a démontré, une fois la classification et la tendance calculées en code plutôt que laissées au LLM (§9), une reformulation fiable sans invention de chiffres sur les 4 scénarios de test (voir contrôle automatique, §9).
+**`gemma3:4b`, confirmed after direct comparison.** `gemma3:1b` was tested and rejected: it hallucinates figures absent from the provided context (3/3 tests). `gemma3:4b` fits within the targeted memory envelope and demonstrated, once classification and trend were computed in code rather than left to the LLM (§9), reliable rephrasing with no invented figures across the 4 test scenarios (see automatic check, §9).
 
-La tâche confiée au modèle est une **reformulation contrainte** — niveau et tendance déjà calculés et imposés dans le prompt, le LLM ne fait qu'interpréter et rédiger — ce qui ne justifie pas un modèle plus gros ou plus « raisonneur ». `gemma3:4b` est par ailleurs une référence documentée pour l'inférence CPU sur 8 Go de RAM.
+The task given to the model is a **constrained reformulation** — level and trend already computed and imposed in the prompt, the LLM only interprets and writes — which does not justify a larger or more "reasoning-capable" model. `gemma3:4b` is, moreover, a documented reference for CPU inference on 8 GB of RAM.
 
-## 9. Contraintes du concours : preuves de conformité
+## 9. Contest constraints: proof of compliance
 
-**Hors-ligne, vérifié.** `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, télémétrie ChromaDB désactivée. Vérifié avec `strace -e trace=network` sur le pipeline complet (ingestion + RAG + génération) : un seul `connect()`, vers `127.0.0.1` (Ollama local). Zéro appel réseau externe.
+**Offline, verified.** `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1`, ChromaDB telemetry disabled. Verified with `strace -e trace=network` on the full pipeline (ingestion + RAG + generation): a single `connect()`, to `127.0.0.1` (local Ollama). Zero external network calls.
 
-**Mémoire, mesurée réellement — pas estimée.** Profiling exécuté le 24/08 sur une machine sans GPU dédié (Intel UHD intégré uniquement), mesure RSS directe (`ps`) du process modèle pendant une génération réelle :
+**Memory, genuinely measured — not estimated.** Profiling run on 08/24 on a machine with no dedicated GPU (integrated Intel UHD only), direct RSS measurement (`ps`) of the model process during a real generation:
 
-| Composant | RAM mesurée |
+| Component | Measured RAM |
 |---|---|
-| `llama-server` (gemma3:4b, Q4_K_M, CPU pur) | ~3,65 Gio |
-| Process Python (embeddings + ChromaDB) | ~0,81 Gio |
-| **Total** | **~4,45 Gio** |
-| Marge restante sur budget 8 Gio | **~3,5 Gio pour l'OS** |
+| `llama-server` (gemma3:4b, Q4_K_M, pure CPU) | ~3.65 GiB |
+| Python process (embeddings + ChromaDB) | ~0.81 GiB |
+| **Total** | **~4.45 GiB** |
+| Remaining margin on the 8 GiB budget | **~3.5 GiB for the OS** |
 
-**Stabilité sur générations répétées, garantie structurellement.** Un risque de croissance mémoire a été identifié (le cache de contexte interne d'Ollama grossit après plusieurs générations successives dans la même session serveur, jusqu'à provoquer un OOM confirmé par le noyau lors des tests). Corrigé par un changement de code (`keep_alive=0` sur chaque appel au modèle, `src/llm.py`), qui décharge le modèle immédiatement après chaque réponse : chaque génération repart d'un état mémoire propre (~3,65 Gio), quel que soit le nombre de diagnostics enchaînés pendant la démo. Détail technique complet : `docs/cahier-des-charges.md` §12.
+**Stability under repeated generations, guaranteed structurally.** A memory-growth risk was identified (Ollama's internal context cache grows after several successive generations within the same server session, eventually causing an OOM confirmed by the kernel during testing). Fixed with a code change (`keep_alive=0` on every model call, `src/llm.py`), which unloads the model immediately after each response: every generation starts from a clean memory state (~3.65 GiB), regardless of how many diagnoses are chained during the demo. Full technical detail: `docs/cahier-des-charges.md` §12.
 
-**Latence.** ~72-85s par diagnostic en génération CPU pure (~8,9 tokens/s en décodage). Trop lent pour enchaîner plusieurs générations live sans casser le rythme d'une démo — mitigé par des diagnostics pré-générés (`demo/diagnostics_precalcules.md`) disponibles pour affichage instantané via `python -m src.main --precalcule`, **au moins un scénario restant généré en direct** pour prouver au jury que ce n'est pas pré-enregistré. Assumé et documenté, pas dissimulé.
+**Latency.** ~72-85s per diagnosis in pure CPU generation (~8.9 tokens/s decoding). Too slow to chain several live generations without breaking a demo's pace — mitigated with pre-generated diagnoses (`demo/diagnostics_precalcules.md`) available for instant display via `python -m src.main --precalcule`, **with at least one scenario staying live-generated** to prove to the judges it is not pre-recorded. Acknowledged and documented, not hidden.
 
-**Usage du RAG, démontré visuellement.** La CLI de démo affiche explicitement les sources du corpus consultées pour chaque diagnostic, et l'historique complet de la parcelle avant génération — le jury voit le RAG fonctionner, pas seulement le résultat final.
+**RAG usage, demonstrated visually.** The demo CLI explicitly displays the corpus sources consulted for each diagnosis, and the plot's full history before generation — the judges see RAG actually working, not just the final result.
 
-**Qualité des diagnostics.** Les 4 scénarios de test (Normal / Vigilance / Alerte / Critique, données réelles) ont été relus manuellement et passés au contrôle heuristique de `test_scenarios.py` (détection de chiffres absents du contexte fourni) : aucun chiffre suspect détecté sur les 4.
+**Diagnosis quality.** The 4 test scenarios (Normal / Vigilance / Alert / Critical, real data) were manually reviewed and passed through `test_scenarios.py`'s heuristic check (detection of figures absent from the provided context): no suspicious figure detected across the 4.
 
-## 10. Interface de démo
+## 10. Demo interface
 
-CLI (`python -m src.main --parcelle <ID>`), retenue plutôt qu'une interface Streamlit — gain marginal pour le temps disponible face à un jury technique. Affiche : niveau de stress (badge coloré), historique complet et tendance, sources RAG consultées, puis le diagnostic généré et sa latence réelle.
+CLI (`python -m src.main --parcelle <ID>`), chosen over a Streamlit interface — marginal gain for the time available in front of a technical jury. Displays: stress level (colored badge), full history and trend, consulted RAG sources, then the generated diagnosis and its real latency.
 
 ## 11. Citation
 
-Ce projet utilise le dataset scientifique **Multispectral Potato Plants Images** (Butte, Vakanski, Duellman et al., 2021 — University of Idaho). Les valeurs de stress hydrique sont extraites directement des annotations d'origine (comptage `healthy`/`stressed` par scène), et non devinées par un modèle. Voir §7 pour la nuance sur le regroupement en historique de parcelle.
+This project uses the scientific dataset **Multispectral Potato Plants Images** (Butte, Vakanski, Duellman et al., 2021 — University of Idaho). Water stress values are extracted directly from the original annotations (`healthy`/`stressed` counting per scene), not guessed by a model. See §7 for the nuance on grouping into plot history.
 
-Source : https://www.webpages.uidaho.edu/vakanski/Multispectral_Images_Dataset.html
+Source: https://www.webpages.uidaho.edu/vakanski/Multispectral_Images_Dataset.html
 
-## 12. Statut du projet à la soumission
+## 12. Project status at submission
 
-- ✅ Pipeline complet fonctionnel hors-ligne (données réelles → RAG → LLM local)
-- ✅ Contrainte mémoire 8 Go vérifiée par mesure réelle, et confirmée par le profiler officiel ADTC (`submission.json`) — dont un thermal throttling jamais mesuré auparavant (aucun déclenchement observé)
-- ✅ Risque de stabilité mémoire identifié et corrigé structurellement
-- ✅ Corpus agronomique et données de mission validés pour la démo
-- ✅ Interface CLI fonctionnelle avec filet de sécurité pour la latence
-- ✅ Script NDVI bonus (calcul à partir des canaux bruts Red/NIR) : implémenté, méthode validée (r = 0,89 avec les annotations)
-- ✅ Structure conforme au template officiel ADTC (`metadata.json`, `download_model.sh`, `model/`, `REPORT.md` à la racine)
-- ✅ Testé sur 2 cas limites (donnée incomplète, requête RAG hors-domaine) — dégradation propre confirmée ; un faux négatif trouvé (panne capteur classée "Normal") a été corrigé (voir `REPORT.md`)
-- ⚠️ Répétitions en conditions réelles sur machine cible : à faire avant le jour J
+- ✅ Full pipeline functional offline (real data → RAG → local LLM)
+- ✅ 8 GB memory constraint verified by real measurement, and confirmed by the official ADTC profiler (`submission.json`) — including thermal throttling, never measured before (none observed)
+- ✅ Memory stability risk identified and fixed structurally
+- ✅ Agronomic corpus and mission data validated for the demo
+- ✅ Functional CLI interface with a latency safety net
+- ✅ Bonus NDVI script (computation from raw Red/NIR channels): implemented, method validated (r = 0.89 with the annotations)
+- ✅ Structure compliant with the official ADTC template (`metadata.json`, `download_model.sh`, `model/`, `REPORT.md` at the root)
+- ✅ Tested on 2 edge cases (incomplete data, off-domain RAG query) — clean degradation confirmed; a false negative found (sensor failure classified as "Normal") has been fixed (see `REPORT.md`)
+- ⚠️ Rehearsals under real conditions on the target machine: still to do before submission day
 
 ---
 
-*Document compilé à partir de `docs/cahier-des-charges.md` (v3.0) — s'y référer pour le détail des décisions, du raisonnement et de la traçabilité complète. Le document de référence exigé par le règlement ADTC (structure imposée, benchmarks officiels du profiler, tests de robustesse, essai de langue ouest-africaine) est `REPORT.md` à la racine du dépôt — le présent dossier reste la version narrative complète en français.*
+*Document compiled from `docs/cahier-des-charges.md` (v3.0) — refer to it for full decision detail, reasoning, and traceability. The reference document required by the ADTC rules (mandated structure, official profiler benchmarks, robustness tests, West African language attempt) is `REPORT.md` at the repo root — this dossier remains the full narrative version.*

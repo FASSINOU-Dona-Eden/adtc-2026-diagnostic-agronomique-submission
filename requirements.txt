@@ -1,20 +1,20 @@
-# Pipeline ADTC 2026 — dépendances de base
+# ADTC 2026 Pipeline — base dependencies
 #
-# IMPORTANT : torch en CPU-only, explicitement. Sans cette ligne, pip
-# installe par défaut le build GPU de PyTorch + ~2,7 Go de bibliothèques
-# CUDA (nvidia-*) — totalement inutiles sur le laptop grand public "sans
-# GPU dédié" ciblé par le concours (cahier des charges §1), et ça fait
-# gonfler l'environnement à 5+ Go pour rien. Vérifié en pratique sur ce
-# projet : installer depuis cet index fait passer le venv de 5,4 Go à 2,0 Go
-# (torch==...+cpu, zéro paquet nvidia-*, torch.cuda.is_available() == False).
+# IMPORTANT: torch CPU-only, explicitly. Without this line, pip
+# installs the GPU build of PyTorch by default + ~2.7 GB of
+# CUDA libraries (nvidia-*) — completely useless on the consumer laptop
+# with "no dedicated GPU" targeted by the contest (specification §1), and it
+# bloats the environment by 5+ GB for nothing. Verified in practice on this
+# project: installing from this index brings the venv down from 5.4 GB to 2.0 GB
+# (torch==...+cpu, zero nvidia-* package, torch.cuda.is_available() == False).
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
 
 ollama
 chromadb
-# faiss-cpu        # alternative à chromadb pour la recherche vectorielle
+# faiss-cpu        # alternative to chromadb for vector search
 sentence-transformers
 numpy
 pandas
 pillow
-streamlit          # optionnel, si interface web retenue
+streamlit          # optional, if a web interface is chosen

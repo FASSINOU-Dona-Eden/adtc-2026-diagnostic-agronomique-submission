@@ -1,21 +1,21 @@
-"""Peuple la base SQLite avec un historique de missions — données HYBRIDES
-(cahier des charges §6.1, décision du 24/08) : les ratios de stress sont
-RÉELS, extraits des annotations du dataset *Multispectral Potato Plants*
-(Butte, Vakanski, Duellman et al., 2021 — University of Idaho) via
-`scripts/extract_dataset_stress.py`. Chaque mission ci-dessous cite la scène
-source exacte (ex: "Image_102, train, 2/11 zones stressées").
+"""Populates the SQLite database with a mission history — HYBRID data
+(specification §6.1, decision of 08/24): the stress ratios are
+REAL, extracted from the *Multispectral Potato Plants* dataset's
+annotations (Butte, Vakanski, Duellman et al., 2021 — University of Idaho) via
+`scripts/extract_dataset_stress.py`. Each mission below cites its exact
+source scene (e.g. "Image_102, train, 2/11 stressed zones").
 
-⚠️ Ce qui N'EST PAS réel : le regroupement de plusieurs scènes en "missions
-successives sur une même parcelle" (parcelle_id, dates, séquençage). Le
-dataset ne contient aucun suivi longitudinal du même point dans le temps
-(pas d'identifiant de parcelle ni de date de capture dans ses métadonnées) —
-ce montage est une construction de démo, à ne pas présenter comme une vraie
-série temporelle terrain. Voir aussi la note équivalente en §6.1 et Bloc 5
-du cahier des charges.
+⚠️ What is NOT real: the grouping of several scenes into "successive
+missions on the same plot" (parcelle_id, dates, sequencing). The
+dataset contains no longitudinal tracking of the same point over time
+(no plot identifier nor capture date in its metadata) —
+this construct is a demo device, not to be presented as a genuine
+field time series. See also the equivalent note in §6.1 and Block 5
+of the specification document.
 
-4 parcelles couvrant des scénarios distincts (cf. grille de lecture dans
-corpus/seuils_alerte.md), pour ne pas juger la qualité des diagnostics sur
-un seul cas — voir src/test_scenarios.py pour les faire tourner tous.
+4 plots covering distinct scenarios (cf. the reading grid in
+corpus/seuils_alerte.md), so as not to judge diagnosis quality on
+a single case — see src/test_scenarios.py to run them all.
 
 Usage: python -m src.seed_data
 """
@@ -26,109 +26,109 @@ from src.db import init_db, insert_mission
 from src.models import MissionReading
 
 MISSIONS_DEMO = [
-    # PARC-01 : dégradation continue, termine en zone "alerte" (35-60%).
-    # Cas de base, sert à tester le raisonnement "évolution depuis la
-    # dernière mission" sur une tendance qui empire.
+    # PARC-01: continuous degradation, ends up in the "alert" zone (35-60%).
+    # Base case, used to test the "evolution since the last mission"
+    # reasoning on a worsening trend.
     MissionReading(
         mission_id="M-2026-06-01",
         parcelle_id="PARC-01",
         date=date(2026, 6, 1),
-        culture="Pomme de terre",
-        stress_ratio=2 / 11,  # Image_102 (train) : 2/11 zones stressées
+        culture="Potato",
+        stress_ratio=2 / 11,  # Image_102 (train): 2/11 stressed zones
         zones_stressees=2,
         zones_totales=11,
-        notes="Début de saison, conditions favorables.",
+        notes="Start of season, favorable conditions.",
     ),
     MissionReading(
         mission_id="M-2026-07-05",
         parcelle_id="PARC-01",
         date=date(2026, 7, 5),
-        culture="Pomme de terre",
-        stress_ratio=4 / 12,  # Image_103 (train) : 4/12 zones stressées
+        culture="Potato",
+        stress_ratio=4 / 12,  # Image_103 (train): 4/12 stressed zones
         zones_stressees=4,
         zones_totales=12,
-        notes="Période sèche signalée localement.",
+        notes="Dry spell reported locally.",
     ),
     MissionReading(
         mission_id="M-2026-08-15",
         parcelle_id="PARC-01",
         date=date(2026, 8, 15),
-        culture="Pomme de terre",
-        stress_ratio=6 / 11,  # Image_014 (train) : 6/11 zones stressées
+        culture="Potato",
+        stress_ratio=6 / 11,  # Image_014 (train): 6/11 stressed zones
         zones_stressees=6,
         zones_totales=11,
-        notes="Dernière mission avant génération du diagnostic de démo.",
+        notes="Last mission before generating the demo diagnosis.",
     ),
-    # PARC-02 : une seule mission, stress nul ("normal", 0-15%). Teste le
-    # cas "aucun historique disponible" (première mission sur la parcelle),
-    # sur lequel diagnostic.py doit explicitement dire qu'il n'y a pas
-    # d'évolution calculable plutôt que d'en inventer une.
+    # PARC-02: a single mission, zero stress ("normal", 0-15%). Tests the
+    # "no history available" case (first mission on the plot), on which
+    # diagnostic.py must explicitly say there is no computable evolution
+    # rather than inventing one.
     MissionReading(
         mission_id="M-2026-08-10",
         parcelle_id="PARC-02",
         date=date(2026, 8, 10),
-        culture="Pomme de terre",
-        stress_ratio=0 / 12,  # Image_101 (train) : 0/12 zones stressées
+        culture="Potato",
+        stress_ratio=0 / 12,  # Image_101 (train): 0/12 stressed zones
         zones_stressees=0,
         zones_totales=12,
-        notes="Première mission sur cette parcelle, conditions normales.",
+        notes="First mission on this plot, normal conditions.",
     ),
-    # PARC-03 : amélioration après intervention (le stress BAISSE). Teste
-    # que le LLM sait reconnaître une tendance positive et ne force pas un
-    # ton alarmiste par défaut — piège classique de prompt trop orienté
-    # "problème".
+    # PARC-03: improvement after intervention (stress DROPS). Tests
+    # whether the LLM recognizes a positive trend and doesn't default to
+    # an alarmist tone — a classic pitfall of a prompt too focused on
+    # "problems."
     MissionReading(
         mission_id="M-2026-07-01",
         parcelle_id="PARC-03",
         date=date(2026, 7, 1),
-        culture="Pomme de terre",
-        stress_ratio=6 / 10,  # Image_017 (train) : 6/10 zones stressées
+        culture="Potato",
+        stress_ratio=6 / 10,  # Image_017 (train): 6/10 stressed zones
         zones_stressees=6,
         zones_totales=10,
-        notes="Stress élevé détecté, irrigation ciblée déclenchée.",
+        notes="High stress detected, targeted irrigation triggered.",
     ),
     MissionReading(
         mission_id="M-2026-07-20",
         parcelle_id="PARC-03",
         date=date(2026, 7, 20),
-        culture="Pomme de terre",
-        stress_ratio=5 / 16,  # Image_255 (train) : 5/16 zones stressées
+        culture="Potato",
+        stress_ratio=5 / 16,  # Image_255 (train): 5/16 stressed zones
         zones_stressees=5,
         zones_totales=16,
-        notes="Amélioration après irrigation, à confirmer.",
+        notes="Improvement after irrigation, to be confirmed.",
     ),
     MissionReading(
         mission_id="M-2026-08-12",
         parcelle_id="PARC-03",
         date=date(2026, 8, 12),
-        culture="Pomme de terre",
-        stress_ratio=2 / 9,  # Image_205 (train) : 2/9 zones stressées
+        culture="Potato",
+        stress_ratio=2 / 9,  # Image_205 (train): 2/9 stressed zones
         zones_stressees=2,
         zones_totales=9,
-        notes="Poursuite de l'amélioration, situation sous contrôle.",
+        notes="Improvement continuing, situation under control.",
     ),
-    # PARC-04 : niveau "critique" (>60%), déjà élevé et qui continue de
-    # se dégrader vite. Teste le ton d'urgence et la recommandation
-    # d'intervention immédiate.
+    # PARC-04: "critical" level (>60%), already high and continuing to
+    # degrade fast. Tests the sense of urgency and the immediate
+    # intervention recommendation.
     MissionReading(
         mission_id="M-2026-07-28",
         parcelle_id="PARC-04",
         date=date(2026, 7, 28),
-        culture="Pomme de terre",
-        stress_ratio=8 / 14,  # Image_021 (train) : 8/14 zones stressées
+        culture="Potato",
+        stress_ratio=8 / 14,  # Image_021 (train): 8/14 stressed zones
         zones_stressees=8,
         zones_totales=14,
-        notes="Vague de chaleur prolongée signalée sur le secteur.",
+        notes="Prolonged heat wave reported in the area.",
     ),
     MissionReading(
         mission_id="M-2026-08-14",
         parcelle_id="PARC-04",
         date=date(2026, 8, 14),
-        culture="Pomme de terre",
-        stress_ratio=7 / 9,  # Image_006 (train) : 7/9 zones stressées
+        culture="Potato",
+        stress_ratio=7 / 9,  # Image_006 (train): 7/9 stressed zones
         zones_stressees=7,
         zones_totales=9,
-        notes="Aggravation malgré une irrigation partielle.",
+        notes="Worsening despite partial irrigation.",
     ),
 ]
 
@@ -138,7 +138,7 @@ def seed() -> None:
     for mission in MISSIONS_DEMO:
         insert_mission(mission)
     parcelles = sorted({m.parcelle_id for m in MISSIONS_DEMO})
-    print(f"{len(MISSIONS_DEMO)} missions insérées sur {len(parcelles)} parcelles : {', '.join(parcelles)}.")
+    print(f"{len(MISSIONS_DEMO)} missions inserted across {len(parcelles)} plots: {', '.join(parcelles)}.")
 
 
 if __name__ == "__main__":

@@ -1,33 +1,32 @@
-# Stress hydrique chez la pomme de terre
+# Water stress in potato crops
 
-> **Connaissance agronomique générale** sur la sensibilité hydrique de la
-> pomme de terre (stade de tubérisation, symptômes visuels, impact sur le
-> rendement) — savoir standard largement documenté en agronomie, pas une
-> citation d'étude unique. Suffisant pour étayer un diagnostic terrain ;
-> à affiner avec une expertise agronomique locale avant un usage en
-> production réelle.
+> **General agronomic knowledge** on the water sensitivity of
+> potato crops (tuberization stage, visual symptoms, yield impact) —
+> standard knowledge widely documented in agronomy, not a citation of a
+> single study. Sufficient to support a field diagnosis; to be refined
+> with local agronomic expertise before real production use.
 
-## Sensibilité par stade de croissance
+## Sensitivity by growth stage
 
-La pomme de terre est particulièrement sensible au stress hydrique pendant
-la phase de **tubérisation** (formation des tubercules), généralement entre
-6 et 10 semaines après la plantation. Un déficit d'eau à ce stade réduit
-directement le calibre et le rendement, même si la plante survit.
+Potato crops are particularly sensitive to water stress during the
+**tuberization** stage (tuber formation), generally between
+6 and 10 weeks after planting. A water deficit at this stage directly
+reduces tuber size and yield, even if the plant survives.
 
-En phase de levée (0-3 semaines), la plante tolère mieux un déficit
-ponctuel : le système racinaire est encore superficiel mais la demande en
-eau est plus faible.
+During the emergence stage (0-3 weeks), the plant tolerates a
+temporary deficit better: the root system is still shallow but water
+demand is lower.
 
-## Symptômes visibles au sol
+## Visible symptoms on the ground
 
-- Flétrissement des feuilles en fin de journée qui ne se résorbe pas le
-  matin suivant (signe de stress installé, pas juste passager).
-- Jaunissement progressif des feuilles basses.
-- Réduction visible de la croissance du feuillage.
+- Leaf wilting in the late afternoon that does not recover by the
+  following morning (a sign of established stress, not just transient).
+- Progressive yellowing of the lower leaves.
+- Visibly reduced foliage growth.
 
-## Conséquences d'un stress prolongé
+## Consequences of prolonged stress
 
-Un stress hydrique non traité sur plus de 10-15 jours pendant la
-tubérisation peut entraîner une baisse de rendement de 20 à 40 % selon
-l'intensité et la variété. Il favorise aussi certains désordres physiologiques
-(tubercules difformes, cœur creux).
+Untreated water stress lasting more than 10-15 days during
+tuberization can lead to a yield loss of 20 to 40% depending on
+intensity and variety. It also favors certain physiological disorders
+(misshapen tubers, hollow heart).

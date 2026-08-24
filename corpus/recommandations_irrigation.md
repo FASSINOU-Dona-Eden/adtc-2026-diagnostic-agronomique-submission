@@ -1,29 +1,29 @@
-# Recommandations d'irrigation en cas de stress détecté
+# Irrigation recommendations when stress is detected
 
-> **Bonnes pratiques d'irrigation standard**, cohérentes avec les paliers
-> de `seuils_alerte.md` — recommandations génériques mais agronomiquement
-> valides, pas des consignes certifiées pour une exploitation donnée.
+> **Standard irrigation best practices**, consistent with the tiers
+> in `seuils_alerte.md` — generic but agronomically valid
+> recommendations, not certified guidance for a specific farm.
 
-## Zone en vigilance (15-35 % de stress)
+## Vigilance zone (15-35% stress)
 
-- Prioriser un contrôle visuel des zones signalées avant toute action lourde.
-- Si irrigation goutte-à-goutte disponible : augmenter légèrement la
-  fréquence plutôt que le volume par passage.
+- Prioritize a visual check of the flagged zones before any heavy action.
+- If drip irrigation is available: slightly increase
+  frequency rather than the volume per pass.
 
-## Zone en alerte (35-60 % de stress)
+## Alert zone (35-60% stress)
 
-- Déclencher une irrigation ciblée sur les zones stressées sous 48h.
-- Vérifier qu'il ne s'agit pas d'un problème localisé (fuite, bouchage
-  goutte-à-goutte, compaction du sol) plutôt qu'un déficit hydrique général.
+- Trigger targeted irrigation on the stressed zones within 48h.
+- Check whether it is a localized issue (leak, clogged
+  drip line, soil compaction) rather than a general water deficit.
 
-## Zone critique (> 60 % de stress)
+## Critical zone (> 60% stress)
 
-- Irrigation immédiate, en priorisant les zones les plus touchées.
-- Envisager une visite terrain rapprochée pour écarter une cause non
-  hydrique (maladie, carence) qui imiterait les symptômes de stress hydrique.
+- Immediate irrigation, prioritizing the most affected zones.
+- Consider a prompt field visit to rule out a non-water-related
+  cause (disease, deficiency) that could mimic water-stress symptoms.
 
-## Bonnes pratiques générales
+## General best practices
 
-- Irriguer tôt le matin ou en fin de journée pour limiter l'évaporation.
-- Éviter l'irrigation en plein soleil sur feuillage dense (risque de brûlure
-  et gaspillage par évaporation).
+- Irrigate early in the morning or in the evening to limit evaporation.
+- Avoid irrigating dense foliage in full sun (risk of scorching
+  and water loss to evaporation).

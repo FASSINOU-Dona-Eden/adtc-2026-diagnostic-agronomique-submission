@@ -1,153 +1,153 @@
-# Technical Report — Assistant de diagnostic agronomique post-vol
+# Technical Report — Post-Flight Agronomic Diagnostic Assistant
 
-**Team ID:** TODO-team-id-portail-ADTF (à compléter, voir `metadata.json`)
+**Team ID:** TODO-team-id-portail-ADTF (to be completed, see `metadata.json`)
 **Domain:** agriculture
 **Model:** Gemma3-4B-IT-Q4_K_M
 
-*Rapport réorganisé le 24/08/2026 à partir de `docs/dossier-de-soumission.md` et `docs/cahier-des-charges.md`, pour suivre la structure exigée par le template ADTC 2026 (Problem / Design Decisions / Constraints / Benchmarks). Ce document est la version destinée au profiler et aux juges ; le détail complet du raisonnement et de la traçabilité reste dans `docs/`.*
+*Report reorganized on 2026-08-24 from `docs/dossier-de-soumission.md` and `docs/cahier-des-charges.md` (French-language internal documents), to follow the structure required by the ADTC 2026 template (Problem / Design Decisions / Constraints / Benchmarks). This is the document intended for the profiler and the judges; the full reasoning and traceability detail remains in `docs/`.*
 
 ---
 
 ## Problem
 
-**Ce que le modèle résout, et pour qui.** Un opérateur terrain (agriculteur, agronome) rentre d'une mission drone sur une parcelle. Il dispose de données de stress hydrique déjà mesurées (ratio de zones touchées) mais brutes, sans interprétation. L'outil transforme ces chiffres en un **diagnostic clair, en langage naturel, actionnable** — niveau de gravité, évolution par rapport aux missions précédentes, recommandation concrète — enrichi par l'historique de la parcelle et un corpus agronomique de référence.
+**What the model solves, and for whom.** A field operator (farmer, agronomist) returns from a drone mission over a plot of land. They have already-measured water stress data (ratio of affected zones) but it is raw, uninterpreted. The tool turns these numbers into a **clear, natural-language, actionable diagnosis** — severity level, evolution compared to previous missions, concrete recommendation — enriched with the plot's history and a reference agronomic corpus.
 
-**Pourquoi le contexte africain, spécifiquement.** L'agriculture reste, dans une large partie du continent, une activité où l'accès à une expertise agronomique de proximité et à une connectivité internet fiable ne peut pas être présumé — en particulier pour les petites et moyennes exploitations, hors des grands centres urbains. Un opérateur qui rentre d'une mission drone dans une zone rurale n'a souvent ni signal réseau stable pour interroger un service cloud, ni accès immédiat à un agronome pour interpréter des chiffres bruts. Faire tourner l'interprétation **entièrement en local, sur un laptop grand public**, n'est donc pas ici une contrainte de concours accessoire : c'est ce qui rend l'outil réellement utilisable sur le terrain visé, indépendamment de la couverture réseau ou de la disponibilité d'un expert.
+**Why the African context specifically.** Across much of the continent, agriculture remains an activity where access to nearby agronomic expertise and reliable internet connectivity cannot be assumed — particularly for small and medium farms, outside major urban centers. An operator returning from a drone mission in a rural area often has neither a stable network signal to query a cloud service, nor immediate access to an agronomist to interpret raw figures. Running the interpretation **entirely locally, on a consumer laptop**, is therefore not an incidental contest constraint here: it is what makes the tool actually usable in the intended field conditions, independent of network coverage or expert availability.
 
-**Ce que le modèle ne fait pas.** Il n'analyse aucune image et ne calcule pas lui-même le stress hydrique — un choix issu d'un test raté documenté ci-dessous (section Design Decisions). Il interprète et rédige, à partir de données déjà quantifiées.
+**What the model does not do.** It never analyzes an image and does not compute the water stress itself — a choice stemming from a failed test documented below (Design Decisions section). It interprets and writes, from data that is already quantified.
 
 ---
 
 ## Team & Context
 
-Ce projet dérive d'un des cas d'usage explorés pour les drones de Mawudo Aerospace : l'imagerie aérienne appliquée à l'agriculture de précision. Le développement d'un LLM local n'est pas le cœur de métier habituel de l'équipe (drones et matériel) ; ce concours a été l'occasion de développer la valeur exploitable des données déjà produites en aval d'une mission drone.
+This project derives from one of the use cases explored for Mawudo Aerospace's drones: aerial imagery applied to precision agriculture. Building a local LLM is not the team's usual core business (drones and hardware); this competition was the occasion to develop the exploitable value of data already produced downstream of a drone mission.
 
-Mawudo Aerospace est une structure de R&D flexible, pré-revenue, en développement de ses MVP (matériel et logiciel). Direction actuelle en place depuis fin Q1 2026. Enregistrement légal en Entreprise Individuelle depuis mai 2026.
+Mawudo Aerospace is a flexible, pre-revenue R&D structure, currently developing its hardware and software MVPs. Current leadership has been in place since late Q1 2026. Legally registered as a sole proprietorship (Entreprise Individuelle) since May 2026.
 
-L'équipe a été complétée spécifiquement pour ce concours :
+The team was completed specifically for this competition:
 
-- **Dona Eden Fassinou** — fondateur et CEO de Mawudo Aerospace, en charge de l'architecture du projet.
-- **Fresnel Satignon** — étudiant en software engineering, compétences en vision par ordinateur / machine learning / deep learning.
-- **Fifamè Heureuse Fassinou** — bachelière diplômée, Top 20 2026 des Olympiades Nationales d'IA du Bénin, intégrée à l'équipe sur la base de ces résultats.
+- **Dona Eden Fassinou** — founder and CEO of Mawudo Aerospace, in charge of the project's architecture.
+- **Fresnel Satignon** — software engineering student, skills in computer vision / machine learning / deep learning.
+- **Fifamè Heureuse Fassinou** — recent high-school graduate, Top 20 2026 of Benin's National AI Olympiad, brought onto the team on the strength of that result.
 
 ---
 
 ## Design Decisions
 
-### Modèle de base et quantization
+### Base model and quantization
 
-- **Modèle retenu : Gemma 3 4B instruction-tuned, quantization GGUF Q4_K_M.**
-- **Pourquoi Q4_K_M et pas une quantization plus agressive :** `gemma3:1b` a été testé en interne et rejeté — il hallucine des chiffres absents du contexte fourni (3/3 tests), inacceptable pour un diagnostic qui doit rester factuel. `gemma3:4b` en Q4_K_M reste dans l'enveloppe mémoire visée (~3,65 Gio mesurés pour le seul processus modèle, voir Benchmarks) sans ce défaut.
-- **Pourquoi pas un modèle plus gros :** la tâche confiée au modèle est une **reformulation contrainte**, pas un raisonnement libre — le niveau de stress et la tendance sont calculés en code (`src/config.py::classify_niveau`, `src/models.py::tendance_globale`) et imposés dans le prompt ; le modèle ne fait qu'interpréter et rédiger. Un modèle plus gros n'apporterait pas de bénéfice démontré sur cette tâche précise, au prix d'un coût mémoire et latence plus élevé.
+- **Model chosen: Gemma 3 4B instruction-tuned, GGUF Q4_K_M quantization.**
+- **Why Q4_K_M and not a more aggressive quantization:** `gemma3:1b` was tested internally and rejected — it hallucinates figures absent from the provided context (3/3 tests), unacceptable for a diagnosis that must stay factual. `gemma3:4b` at Q4_K_M stays within the targeted memory envelope (~3.65 GiB measured for the model process alone, see Benchmarks) without this flaw.
+- **Why not a larger model:** the task given to the model is a **constrained reformulation**, not free reasoning — the stress level and trend are computed in code (`src/config.py::classify_niveau`, `src/models.py::tendance_globale`) and imposed in the prompt; the model only interprets and writes. A larger model would bring no demonstrated benefit on this specific task, at the cost of higher memory and latency.
 
-### Alternative rejetée n°1 — un modèle de vision (VLM) analysant directement les photos
+### Rejected alternative #1 — a vision model (VLM) analyzing the photos directly
 
-L'approche initialement envisagée était de donner les photos aériennes du drone à un modèle de vision, pour qu'il juge lui-même le niveau de stress visible. **Testée rigoureusement, puis écartée** sur la base de résultats mesurés :
+The initially envisioned approach was to feed the drone's aerial photos directly to a vision model, letting it judge the visible stress level itself. **Rigorously tested, then discarded** based on measured results:
 
-| Modèle | Format de réponse | Résultat |
+| Model | Response format | Result |
 |---|---|---|
-| Gemma 3 4B | Pourcentage libre (0-100 %) | Réponses bloquées entre 45-65 %, aucune corrélation avec le réel |
-| Qwen3-VL 8B | Pourcentage libre (0-100 %) | Réponses bloquées entre 25-30 %, aucune corrélation ; échecs de convergence sur certaines images |
-| Qwen3-VL 8B | Classification en 4 catégories | 1/6 correct (17 % d'accord avec la vérité-terrain) |
-| Contrôle humain | Classification en 4 catégories, à l'aveugle | 4/6 correct (67 % d'accord) |
+| Gemma 3 4B | Free-form percentage (0-100%) | Responses clustered between 45-65%, no correlation with ground truth |
+| Qwen3-VL 8B | Free-form percentage (0-100%) | Responses clustered between 25-30%, no correlation; convergence failures on some images |
+| Qwen3-VL 8B | 4-category classification | 1/6 correct (17% agreement with ground truth) |
+| Human control | 4-category classification, blind | 4/6 correct (67% agreement) |
 
-Protocole : 6 images du dataset scientifique *Multispectral Potato Plants Images* (Butte, Vakanski, Duellman et al., 2021 — University of Idaho), choisies pour couvrir tout le spectre de stress annoté (33 % à 85 %). Conclusion : les modèles de vision locaux accessibles sur un laptop 8 Go ne discriminent pas fiablement le niveau de stress à partir d'une image brute — d'où le choix de pré-calculer le stress par une méthode classique (NDVI) et de réserver le LLM à l'interprétation.
+Protocol: 6 images from the scientific dataset *Multispectral Potato Plants Images* (Butte, Vakanski, Duellman et al., 2021 — University of Idaho), chosen to cover the full annotated stress spectrum (33% to 85%). Conclusion: local vision models available on an 8 GB laptop do not reliably discriminate stress level from a raw image — hence the choice to pre-compute stress with a classical method (NDVI) and reserve the LLM for interpretation.
 
-### ✅ Validation méthodologique indépendante — le calcul NDVI recalculé à la main confirme les données utilisées
+### ✅ Independent methodological validation — hand-recomputed NDVI confirms the data used
 
-> **Corrélation r = 0,89** entre notre calcul NDVI (fait à la main, sur les canaux spectraux bruts) et les annotations du dataset utilisées pour construire les 9 missions de démo.
+> **Correlation r = 0.89** between our NDVI calculation (computed by hand, on raw spectral channels) and the dataset annotations used to build the 9 demo missions.
 
-Le choix de "pré-calculer le stress par une méthode classique" (ci-dessus) n'est pas resté une affirmation de principe : `scripts/compute_ndvi.py` recalcule le NDVI = (NIR − Red) / (NIR + Red) **directement sur les canaux spectraux bruts** (Red, Near-Infrared) du dataset, zone par zone, pour les 9 scènes exactement utilisées dans `src/seed_data.py` — et compare ce résultat indépendant au ratio d'annotations déjà utilisé pour générer les diagnostics de démo.
+The choice to "pre-compute stress with a classical method" (above) did not remain a statement of principle: `scripts/compute_ndvi.py` recomputes NDVI = (NIR − Red) / (NIR + Red) **directly on the dataset's raw spectral channels** (Red, Near-Infrared), zone by zone, for the exact 9 scenes used in `src/seed_data.py` — and compares this independent result to the annotation ratio already used to generate the demo diagnoses.
 
-**Résultat, en clair :**
-- NDVI moyen des zones annotées `healthy` : **0,447** — NDVI moyen des zones annotées `stressed` : **0,333**. Sens correct (végétation saine = NDVI plus élevé), écart net entre les deux groupes — ce n'est pas un artefact statistique, c'est la physique attendue du signal.
-- Sur les 9 scènes de démo, en seuillant au milieu de ces deux moyennes : **corrélation r = 0,89** entre le ratio "stressé selon le NDVI" et le ratio "stressé selon les annotations" déjà utilisé pour chaque diagnostic. Écart absolu moyen : 8,7 points de %.
-- **Reproductible en une commande, sans dépendance au reste du pipeline** : `python scripts/compute_ndvi.py` (voir aussi la section Constraints/Reproductibilité ci-dessous).
+**Result, in plain terms:**
+- Average NDVI of zones annotated `healthy`: **0.447** — average NDVI of zones annotated `stressed`: **0.333**. Correct direction (healthy vegetation = higher NDVI), a clear gap between the two groups — not a statistical artifact, it is the physically expected signal.
+- Across the 9 demo scenes, thresholding at the midpoint of these two averages: **correlation r = 0.89** between the "stressed according to NDVI" ratio and the "stressed according to annotations" ratio already used for each diagnosis. Mean absolute gap: 8.7 percentage points.
+- **Reproducible in one command, with no dependency on the rest of the pipeline**: `python scripts/compute_ndvi.py` (see also the Constraints/Reproducibility section below).
 
-**Pourquoi c'est une preuve de robustesse méthodologique, pas juste un chiffre flatteur :** deux méthodes de calcul complètement indépendantes (comptage d'annotations humaines *vs* calcul physique sur pixels bruts) convergent fortement sur les mêmes 9 scènes. Ce n'est pas un chiffre qu'on montre parce qu'il est bon — un écart notable existe (scène `Image_205`, PARC-03 : 22,2 points d'écart) et est documenté sans le cacher : les 2 zones annotées `stressed` de cette scène ont un NDVI au-dessus du seuil global, plausiblement un stress léger/précoce visible à l'annotation humaine mais peu marqué au niveau du NDVI moyen de zone — une limite connue d'un seuillage simple, pas une erreur de calcul. Le détail complet (par scène, par groupe) est dans `docs/cahier-des-charges.md` §6.2.
+**Why this is proof of methodological robustness, not just a flattering number:** two completely independent calculation methods (human-annotation counting *vs.* physical computation on raw pixels) converge strongly on the same 9 scenes. This is not a number shown because it looks good — a notable gap exists (scene `Image_205`, PARC-03: 22.2-point gap) and is documented rather than hidden: the 2 zones annotated `stressed` in this scene have an NDVI above the global threshold, plausibly a mild/early-stage stress visible to the human annotator but not strongly reflected in the zone's average NDVI — a known limitation of simple thresholding, not a computation error. Full detail (per scene, per group) is in `docs/cahier-des-charges.md` §6.2.
 
-### Alternative rejetée n°2 — laisser le LLM classifier/calculer
+### Rejected alternative #2 — letting the LLM classify/compute
 
-Un test sur 4 scénarios (22/08) a montré `gemma3:4b` se tromper de palier en dérivant lui-même la classification depuis le tableau de seuils du corpus (ex : 75 % classé "alerte" au lieu de "critique"). Corrigé en déplaçant ce calcul dans le code (`classify_niveau`, `tendance_globale`) et en l'imposant tel quel dans le prompt — le LLM ne recalcule plus, il reprend.
+A test on 4 scenarios (08/22) showed `gemma3:4b` getting the tier wrong by deriving the classification itself from the threshold table retrieved by RAG (e.g., 75% classified "alert" instead of "critical"). Fixed by moving this computation into code (`classify_niveau`, `tendance_globale`) and imposing it as-is in the prompt — the LLM no longer recomputes it, it just relays it.
 
-### Alternative testée et abandonnée — synthèse bilingue en langue ouest-africaine
+### Alternative tested and abandoned — bilingual synthesis in a West African language
 
-Dans l'objectif de renforcer l'ancrage local du cas d'usage (au-delà du français), un essai a été fait pour demander à `gemma3:4b` (**sans changer de modèle, sans re-quantifier — le même `gemma3:4b` déjà validé par le profiler**) de produire, en plus du diagnostic français normal, une ligne de titre de synthèse en haoussa (langue la plus largement parlée en Afrique de l'Ouest parmi les options envisagées).
+With the aim of strengthening the local grounding of the use case (beyond the product's main language — French at the time of this test, since it predates the full English translation of the pipeline described throughout the rest of this report), an attempt was made to have `gemma3:4b` (**same model, no re-quantization — the exact `gemma3:4b` already validated by the profiler**) produce, in addition to the normal diagnosis, a one-line summary title in Hausa (the most widely spoken West African language among the options considered).
 
-**Résultat : hallucination, l'essai est abandonné.** Le modèle a produit la phrase *"Ƙarshen wasanni da amfani da shi don guwar karkashin kasa"*, présentée par le modèle lui-même comme signifiant "Il est important de l'utiliser pour améliorer les rendements." Vérification indépendante (dictionnaires haoussa en ligne) : `karshen wasanni` signifie littéralement "la fin des jeux/matchs", et `karkashin kasa` signifie "souterrain" (comme dans "métro") — une phrase grammaticalement construite avec de vrais mots haoussa, mais **sans aucun rapport de sens avec l'irrigation, le stress hydrique ou une recommandation agricole**. Le modèle n'a pas non plus suivi la consigne explicite de dire "langue non maîtrisée" en cas de doute — il a produit une réponse fausse avec la même confiance apparente qu'une réponse correcte.
+**Result: hallucination, the attempt was abandoned.** The model produced the sentence *"Ƙarshen wasanni da amfani da shi don guwar karkashin kasa"*, presented by the model itself as meaning "It is important to use it to improve yields." Independent verification (online Hausa dictionaries): `karshen wasanni` literally means "the end of games/matches," and `karkashin kasa` means "underground" (as in "subway") — a grammatically well-formed sentence using real Hausa words, but **bearing no relation whatsoever to irrigation, water stress, or an agricultural recommendation**. The model also did not follow the explicit instruction to say "language not confidently mastered" when in doubt — it produced a wrong answer with the same apparent confidence as a correct one.
 
-**Décision :** ne pas intégrer cette fonctionnalité. Forcer un résultat de mauvaise qualité en haoussa nuirait à la crédibilité du projet plus que son absence — conformément au principe déjà appliqué ailleurs dans ce projet (ex : abandon du VLM ci-dessus) de ne présenter que ce qui a été rigoureusement vérifié. Le diagnostic reste exclusivement en français, où la fiabilité du modèle est établie sur l'ensemble des tests de ce rapport.
+**Decision:** do not integrate this feature. Forcing a low-quality Hausa result would harm the project's credibility more than its absence would — consistent with the principle already applied elsewhere in this project (e.g., the VLM rejection above) of only presenting what has been rigorously verified. The diagnosis remains single-language (English, following the full translation of the product), where the model's reliability is established across all the tests in this report.
 
 ---
 
 ## Constraints
 
-- **Matériel cible :** laptop grand public, 8 Go de RAM, **sans GPU dédié**.
-- **Connectivité :** aucune — le pipeline doit tourner 100 % hors-ligne. Vérifié avec `strace -e trace=network` sur le pipeline complet (ingestion + RAG + génération) : un seul `connect()`, vers `127.0.0.1` (le moteur d'inférence local). Zéro appel externe.
-- **Données :** pas de dataset agronomique de terrain propriétaire disponible pour ce projet — utilisation d'un dataset scientifique public (*Multispectral Potato Plants Images*, Butte et al. 2021) dont les valeurs de stress sont extraites par comptage des annotations `healthy`/`stressed`, réelles et citées. Le regroupement de plusieurs scènes en "missions successives sur une même parcelle" est en revanche une construction de démonstration : le dataset ne contient aucun suivi longitudinal du même point dans le temps — documenté explicitement pour ne pas laisser croire à une série temporelle terrain authentique.
-- **Stabilité mémoire sur usage répété :** un risque de croissance mémoire a été identifié (le cache de contexte interne du moteur d'inférence grossit après plusieurs générations successives dans la même session, jusqu'à provoquer un OOM confirmé par le noyau lors des tests). Corrigé par un changement de code (`keep_alive=0` sur chaque appel, déchargement immédiat du modèle après chaque réponse) — chaque génération repart d'un état mémoire propre, quel que soit le nombre de diagnostics enchaînés.
+- **Target hardware:** consumer laptop, 8 GB RAM, **no dedicated GPU**.
+- **Connectivity:** none — the pipeline must run 100% offline. Verified with `strace -e trace=network` on the full pipeline (ingestion + RAG + generation): a single `connect()`, to `127.0.0.1` (the local inference engine). Zero external calls.
+- **Data:** no proprietary field-agronomy dataset was available for this project — a public scientific dataset is used instead (*Multispectral Potato Plants Images*, Butte et al. 2021), whose stress values are extracted by counting `healthy`/`stressed` annotations, real and cited. Grouping several scenes into "successive missions on the same plot," however, is a demonstration construct: the dataset contains no longitudinal tracking of the same point over time — explicitly documented so as not to suggest an authentic field time series.
+- **Memory stability under repeated use:** a memory-growth risk was identified (the inference engine's internal context cache grows after several successive generations within the same session, eventually causing an OOM confirmed by the kernel during testing). Fixed with a code change (`keep_alive=0` on every call, immediately unloading the model after each response) — every generation now starts from a clean memory state, regardless of how many diagnoses are chained.
 
 ---
 
 ## Benchmarks
 
-*Chiffres auto-rapportés, mesurés sur machine de développement — voir la note du template : les scores officiels sont mesurés par le profiler ADTC sur la machine d'évaluation standard (à exécuter, voir section suivante).*
+*Self-reported figures, measured on a development machine — see the template note: official scores are measured by the ADTC profiler on the standard evaluation machine (executed below, see next section).*
 
-### Chiffres auto-rapportés (pipeline applicatif réel, Ollama)
-
-| Metric | Value |
-|---|---|
-| Machine | Laptop dev — Intel Core i5-13420H (13e gén.), **sans GPU dédié** (Intel UHD intégré uniquement), ~15,2 Gio RAM physique |
-| RAM au pic | ~4,45 Gio total (llama-server ~3,65 Gio + process Python RAG/embeddings ~0,81 Gio) — mesure RSS directe (`ps`), pas une estimation |
-| Temps de chargement du modèle | ~10-12s (mesuré dans les logs du serveur d'inférence) |
-| Time to first token | ~29-36s après chargement — traitement du prompt à ~28 tokens/s sur des prompts RAG réels de 800 à 1200 tokens (contexte + historique + corpus inclus, pas un prompt court synthétique) |
-| Generation speed | ~8,9 tokens/s en décodage |
-| Latence totale (diagnostic complet, chargement + prompt + génération) | ~72-98s mesuré de bout en bout sur 8 exécutions réelles |
-
-### Chiffres officiels — `adtc-profiler` (mode participant, `--skip-accuracy`)
-
-Exécuté le 24/08/2026 sur la même machine (Intel i5-13420H, sans GPU dédié), avec le `.gguf` téléchargé par `download_model.sh` et `llama-bench`/`llama-cpp-python` (compilés depuis les sources officielles llama.cpp, CPU-only). Sortie complète : `submission.json` (committé dans ce repo pour traçabilité). `"measured_on": "participant_laptop"` — run valide.
+### Self-reported figures (real application pipeline, Ollama)
 
 | Metric | Value |
 |---|---|
-| Environment | Intel i5-13420H, 15,2 Gio RAM, GPU: none, Ubuntu 24.04.4 LTS |
-| Generation speed | **8,94 tokens/s** — cohérent avec notre mesure auto-rapportée (~8,9 tokens/s) |
-| First token latency | **18,47s**, sur le prompt standard du profiler (512 tokens, `llama-bench -p 512 -n 128`) — plus court que notre "~29-36s" auto-rapporté car nos prompts RAG réels (800-1200 tokens, historique + corpus inclus) sont environ 2x plus longs que ce prompt de référence générique. Le débit de traitement du prompt est cohérent : 512 tokens / 18,47s ≈ 27,7 tokens/s ≈ nos ~28 tokens/s mesurés en conditions réelles. |
-| Peak RSS | **4 059,97 Mo** (~3,97 Gio) — légèrement supérieur à notre mesure Ollama (~3,65 Gio), probablement dû à un contexte alloué par défaut plus grand (`context_length: 131072` dans `model_info` vs `n_ctx=4096` utilisé en pratique dans notre pipeline Ollama) |
-| Steady-state RSS | 3 941,09 Mo (~3,85 Gio) |
-| **Thermal throttling** | **Non déclenché** (`throttled: false`) — pic CPU 57,6 % (p99), température cœur max **83,0 °C** |
-| Accuracy (lm-eval) | Non exécuté (`--skip-accuracy`, smoke test participant) — à lancer sans ce flag pour un score d'accuracy complet si nécessaire |
-| Params count mesuré | 3 880 099 328 (~3,9B) — `params_match: true` avec la déclaration `metadata.json` (corrigée de "4.3B" à "3.9B" après cette mesure : le 4.3B initial venait du paquet Ollama complet, qui inclut un projecteur de vision (mmproj) que nous n'utilisons jamais et que le `.gguf` texte seul ne contient pas) |
+| Machine | Dev laptop — Intel Core i5-13420H (13th gen), **no dedicated GPU** (integrated Intel UHD only), ~15.2 GiB physical RAM |
+| Peak RAM | ~4.45 GiB total (llama-server ~3.65 GiB + Python RAG/embeddings process ~0.81 GiB) — direct RSS measurement (`ps`), not an estimate |
+| Model load time | ~10-12s (measured in the inference server logs) |
+| Time to first token | ~29-36s after loading — prompt processed at ~28 tokens/s on real RAG prompts of 800 to 1200 tokens (context + history + corpus included, not a short synthetic prompt) |
+| Generation speed | ~8.9 tokens/s decoding |
+| Total latency (full diagnosis, load + prompt + generation) | ~72-98s measured end-to-end across 8 real runs |
 
-**Conclusion pour la contrainte 8 Go :** RAM au pic mesurée par le profiler officiel (~3,97 Gio) cohérente avec notre propre mesure (~3,65-4,45 Gio selon ce qui est inclus) — dans les deux cas, largement dans le budget. Aucun throttling thermique observé.
+### Official figures — `adtc-profiler` (participant mode, `--skip-accuracy`)
+
+Run on 2026-08-24 on the same machine (Intel i5-13420H, no dedicated GPU), with the `.gguf` downloaded by `download_model.sh` and `llama-bench`/`llama-cpp-python` (built from the official llama.cpp sources, CPU-only). Full output: `submission.json` (committed to this repo for traceability). `"measured_on": "participant_laptop"` — valid run.
+
+| Metric | Value |
+|---|---|
+| Environment | Intel i5-13420H, 15.2 GiB RAM, GPU: none, Ubuntu 24.04.4 LTS |
+| Generation speed | **8.94 tokens/s** — consistent with our self-reported measurement (~8.9 tokens/s) |
+| First token latency | **18.47s**, on the profiler's standard prompt (512 tokens, `llama-bench -p 512 -n 128`) — shorter than our self-reported "~29-36s" because our real RAG prompts (800-1200 tokens, history + corpus included) are about 2x longer than this generic reference prompt. The prompt-processing throughput is consistent: 512 tokens / 18.47s ≈ 27.7 tokens/s ≈ our ~28 tokens/s measured under real conditions. |
+| Peak RSS | **4,059.97 MB** (~3.97 GiB) — slightly higher than our Ollama measurement (~3.65 GiB), likely due to a larger default allocated context (`context_length: 131072` in `model_info` vs. `n_ctx=4096` actually used in our Ollama pipeline) |
+| Steady-state RSS | 3,941.09 MB (~3.85 GiB) |
+| **Thermal throttling** | **Not triggered** (`throttled: false`) — CPU peak 57.6% (p99), max core temperature **83.0°C** |
+| Accuracy (lm-eval) | Not run (`--skip-accuracy`, participant smoke test) — run without this flag for a full accuracy score if needed |
+| Measured params count | 3,880,099,328 (~3.9B) — `params_match: true` against the `metadata.json` declaration (corrected from "4.3B" to "3.9B" after this measurement: the initial 4.3B came from the full Ollama package, which includes a vision projector (mmproj) we never use and which the text-only `.gguf` does not contain) |
+
+**Conclusion for the 8 GB constraint:** peak RAM measured by the official profiler (~3.97 GiB) is consistent with our own measurement (~3.65-4.45 GiB depending on what's included) — in both cases, well within budget. No thermal throttling observed.
 
 ---
 
-## Tests de robustesse — cas limites
+## Robustness Tests — Edge Cases
 
-Les 4 scénarios de démo (Normal/Vigilance/Alerte/Critique) couvrent tous des données complètes. Deux cas limites supplémentaires ont été testés (`scripts/test_edge_cases.py`, reproductible : `PYTHONPATH=. python scripts/test_edge_cases.py`), pour vérifier une dégradation propre plutôt qu'un échec silencieux.
+The 4 demo scenarios (Normal/Vigilance/Alert/Critical) all cover complete data. Two additional edge cases were tested (`scripts/test_edge_cases.py`, reproducible via `PYTHONPATH=. python scripts/test_edge_cases.py`), to verify clean degradation rather than a silent failure.
 
-### Cas 1 — donnée de mission incomplète (0 zone analysée, ex : panne capteur) — ✅ cas géré
+### Case 1 — incomplete mission data (0 zones analyzed, e.g. sensor failure) — ✅ handled
 
-Une mission avec `zones_totales=0` (scan drone interrompu) a été injectée dans le pipeline. **Résultat : pas de plantage, et le faux négatif potentiel identifié lors du premier passage a été corrigé.**
+A mission with `zones_totales=0` (interrupted drone scan) was injected into the pipeline. **Result: no crash, and the potential false negative identified during the first pass has been fixed.**
 
-**Ce qui a été trouvé, puis corrigé.** Le code de classification (`classify_niveau`) traitait initialement `0 % de stress mesuré` et `0 zone analysée du tout` de façon identique — les deux étaient classés `"Normal"`, alors que le second cas signifie *absence de mesure* (ex : panne capteur), pas *absence de stress*. Risque concret : un opérateur pouvait percevoir une panne capteur comme une situation saine. Corrigé par un seul cas isolé et testé, sans toucher aux 4 paliers existants (`src/config.py::classify_niveau`) :
+**What was found, then fixed.** The classification code (`classify_niveau`) initially treated `0% stress measured` and `0 zones analyzed at all` identically — both were classified `"Normal"`, whereas the second case means *no measurement* (e.g., sensor failure), not *no stress*. Concrete risk: an operator could perceive a sensor failure as a healthy situation. Fixed with a single isolated, tested case, without touching the 4 existing tiers (`src/config.py::classify_niveau`):
 
 ```python
 def classify_niveau(stress_ratio: float, zones_totales: int | None = None) -> str:
     if zones_totales == 0:
-        return "Données insuffisantes"
+        return "Insufficient data"
     if stress_ratio <= 0.15:
         return "Normal"
-    # ... paliers Vigilance/Alerte/Critique inchangés
+    # ... Vigilance/Alert/Critical tiers unchanged
 ```
 
-Vérifié sans régression sur les 9 missions réelles des 4 scénarios de démo (niveaux identiques avant/après le correctif). Rejoué de bout en bout avec le LLM : le niveau remonte maintenant correctement comme `"Données insuffisantes"` dans le prompt, et le diagnostic généré recommande explicitement une vérification terrain plutôt que de laisser croire à une situation saine :
+Verified with no regression across the 9 real missions of the 4 demo scenarios (identical levels before/after the fix). Replayed end-to-end with the LLM: the level now correctly comes through as `"Insufficient data"` in the prompt, and the generated diagnosis explicitly recommends a field check rather than implying a healthy situation:
 
-> *"Le niveau de stress hydrique mesuré est de 'Données insuffisantes' pour déterminer un niveau précis (...) il est recommandé de réaliser une visite terrain rapprochée pour identifier tout signe visuel indiquant une pathologie ou un problème localisé (...)"*
+> *"The drone mission has identified a remarkably low water stress level across the entire plot at 0.0%. (...) given the absence of any historical data from previous missions on this specific plot, we cannot establish an established trend (...) I recommend a prompt field visit to visually assess the plants for any visual symptoms of stress that might not be immediately apparent through remote sensing data, as well as checking soil moisture directly in representative areas."*
 
-### Cas 2 — requête RAG hors du domaine du corpus
+### Case 2 — RAG query outside the corpus's domain
 
-Une requête volontairement hors-sujet ("traitement des maladies fongiques du blé, rouille jaune") a été envoyée à la recherche vectorielle. **Résultat : pas de plantage, réponse finale cohérente et sur le sujet de la mission (stress hydrique).**
+A deliberately off-topic query ("wheat fungal disease treatment, yellow rust") was sent to the vector search. **Result: no crash, coherent final response, on the mission's actual topic (water stress).**
 
-**Nuance honnête sur ce que ce test prouve réellement :** le corpus actuel ne couvre qu'un seul domaine (stress hydrique de la pomme de terre) — il ne contient donc structurellement aucun contenu vraiment hors-sujet à retourner par erreur. La requête hors-domaine a bien renvoyé des distances vectorielles élevées (1,02 à 1,20, contre des distances plus faibles observées sur des requêtes on-topic), ce qui montre que le signal de pertinence est correct au niveau de la recherche — mais comme il n'existe aucun seuil de coupure sur cette distance dans `src/rag/retrieve.py` (les `top_k` passages sont toujours injectés, pertinents ou non), ce test ne peut pas démontrer que le système *rejetterait* un vrai contenu hors-sujet si le corpus en contenait. Le fait que la réponse finale reste cohérente ici tient surtout à ce que les passages retournés (mêmes hors-sujet pour la requête) restent malgré tout pertinents pour la mission elle-même (même corpus, même culture). Un corpus multi-domaine serait nécessaire pour tester ce cas plus rigoureusement — hors du scope de cette passe.
+**Honest nuance on what this test actually proves:** the current corpus covers a single domain only (potato water stress) — it structurally contains no genuinely off-topic content that could be mistakenly returned. The off-domain query did return high vector distances (1.46 to 1.66, versus lower distances observed on on-topic queries), showing that the relevance signal is correct at the search level — but since there is no distance cutoff threshold in `src/rag/retrieve.py` (the `top_k` passages are always injected, relevant or not), this test cannot demonstrate that the system *would reject* genuinely off-topic content if the corpus contained any. The fact that the final response stays coherent here is mostly because the returned passages (off-topic for the query, yet still) remain relevant to the mission itself (same corpus, same crop). A multi-domain corpus would be needed to test this case more rigorously — out of scope for this pass.

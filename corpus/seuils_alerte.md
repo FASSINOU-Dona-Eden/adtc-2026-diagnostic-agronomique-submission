@@ -1,28 +1,27 @@
-# Seuils d'alerte — ratio de zones stressées
+# Alert thresholds — stressed-zone ratio
 
-> **Grille opérationnelle retenue pour cet outil.** Seuils cohérents avec la
-> pratique courante en irrigation de précision (paliers à 15/35/60 % de
-> zones touchées) — ce n'est pas une norme officielle unique, les seuils
-> varient selon le contexte régional et la culture. Utilisée de façon
-> identique dans le code (`src/config.py::classify_niveau`) et dans le
-> corpus, pour que le calcul et l'explication du diagnostic restent
-> synchronisés.
+> **Operational grid chosen for this tool.** Thresholds consistent with
+> common practice in precision irrigation (tiers at 15/35/60% of
+> affected zones) — this is not a single official standard, thresholds
+> vary by regional context and crop. Used identically in the code
+> (`src/config.py::classify_niveau`) and in the corpus, so that the
+> computation and the diagnosis explanation stay in sync.
 
-## Grille de lecture du ratio de stress (% de zones stressées sur la parcelle)
+## Reading grid for the stress ratio (% of stressed zones on the plot)
 
-| Ratio de zones stressées | Niveau | Action recommandée |
+| Stressed-zone ratio | Level | Recommended action |
 |---|---|---|
-| 0 - 15 % | Normal | Surveillance de routine, pas d'action immédiate. |
-| 15 - 35 % | Vigilance | Vérifier l'irrigation sur les zones concernées sous 3-5 jours. |
-| 35 - 60 % | Alerte | Intervention sous 48h : irrigation ciblée ou diagnostic terrain. |
-| > 60 % | Critique | Intervention immédiate, risque de perte de rendement significative. |
+| 0 - 15% | Normal | Routine monitoring, no immediate action. |
+| 15 - 35% | Vigilance | Check irrigation on the affected zones within 3-5 days. |
+| 35 - 60% | Alert | Intervene within 48h: targeted irrigation or field diagnosis. |
+| > 60% | Critical | Immediate intervention, risk of significant yield loss. |
 
-## Lecture de l'évolution (mission à mission)
+## Reading the evolution (mission to mission)
 
-Une hausse du ratio de stress de plus de **10 points de pourcentage** entre
-deux missions successives est considérée comme une dégradation rapide,
-justifiant une intervention même si le niveau absolu reste en zone
-"vigilance".
+A rise in the stress ratio of more than **10 percentage points** between
+two successive missions is considered a rapid degradation,
+warranting intervention even if the absolute level remains in the
+"vigilance" zone.
 
-Une baisse ou une stabilité du ratio après une irrigation confirme
-l'efficacité de l'intervention précédente.
+A drop or stability in the ratio after an irrigation confirms
+the effectiveness of the previous intervention.

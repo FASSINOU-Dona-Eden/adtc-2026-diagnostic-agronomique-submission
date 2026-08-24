@@ -1,8 +1,8 @@
-"""Appel du LLM local via Ollama (§4.3).
+"""Local LLM call via Ollama (§4.3).
 
-Le modèle ne fait qu'interpréter/reformuler : il reçoit des données déjà
-calculées (stress ratio, historique, passages RAG) et rédige un diagnostic
-en langage naturel. Il ne voit jamais d'image, ne calcule rien lui-même.
+The model only interprets/rephrases: it receives data that is already
+computed (stress ratio, history, RAG passages) and writes a diagnosis
+in natural language. It never sees an image, computes nothing itself.
 """
 
 import time
@@ -13,17 +13,17 @@ import ollama
 from src.config import OLLAMA_HOST, OLLAMA_MODEL
 
 SYSTEM_PROMPT = """\
-Tu es un assistant agronomique qui aide un opérateur terrain à interpréter \
-les résultats d'une mission drone sur une parcelle.
+You are an agronomic assistant helping a field operator interpret \
+the results of a drone mission over a plot of land.
 
-Règles strictes :
-- Tu ne reçois JAMAIS d'image. Tu travailles uniquement à partir des chiffres \
-et du contexte fournis dans le message.
-- Tu n'inventes aucun chiffre : tu reformules et interprètes ceux qu'on te donne.
-- Ton diagnostic doit être clair, concis (5-8 phrases), en français, et se \
-terminer par une recommandation actionnable concrète.
-- Si le contexte fourni (historique, fiches techniques) ne couvre pas un point, \
-dis-le plutôt que d'inventer.
+Strict rules:
+- You NEVER receive an image. You work solely from the figures \
+and the context provided in the message.
+- You never invent a figure: you rephrase and interpret the ones you are given.
+- Your diagnosis must be clear, concise (5-8 sentences), in English, and \
+end with a concrete, actionable recommendation.
+- If the provided context (history, technical sheets) does not cover a point, \
+say so rather than inventing it.
 """
 
 
@@ -42,17 +42,17 @@ def generate_diagnostic(prompt: str, model: str = OLLAMA_MODEL) -> GenerationRes
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ],
-        # keep_alive=0 : décharge le modèle de la RAM immédiatement après
-        # cette réponse, au lieu de le garder chargé 5 min par défaut. Sans
-        # ça, le cache de contexte interne d'Ollama grossit à chaque appel
-        # successif dans la même session serveur (mesuré : ~3,65 Gio en
-        # isolation → ~4,3-4,4 Gio après 3-4 appels d'affilée), ce qui a
-        # provoqué un OOM confirmé par le noyau lors de la pré-génération
-        # des diagnostics de démo (24/08). keep_alive=0 rend chaque appel
-        # structurellement borné à ~3,65 Gio, quel que soit le nombre de
-        # générations enchaînées — au prix d'un rechargement du modèle
-        # (~10-15s) à chaque appel, déjà absorbé dans la latence mesurée.
-        # Voir cahier des charges, Bloc 5 / risques.
+        # keep_alive=0: unloads the model from RAM immediately after this
+        # response, instead of keeping it loaded for 5 min by default.
+        # Without this, Ollama's internal context cache grows with every
+        # successive call within the same server session (measured: ~3.65
+        # GiB in isolation → ~4.3-4.4 GiB after 3-4 calls in a row), which
+        # caused an OOM confirmed by the kernel while pre-generating the
+        # demo diagnoses (08/24). keep_alive=0 makes every call
+        # structurally bounded at ~3.65 GiB, regardless of how many
+        # generations are chained — at the cost of reloading the model
+        # (~10-15s) on every call, already absorbed into the measured
+        # latency. See the specification document, Block 5 / risks.
         keep_alive=0,
     )
     latency = time.perf_counter() - start

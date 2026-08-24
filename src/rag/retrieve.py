@@ -1,11 +1,11 @@
-"""Recherche vectorielle dans le corpus agronomique indexé (§4.2).
+"""Vector search in the indexed agronomic corpus (§4.2).
 
-Requête → embedding → top-k passages les plus proches, retournés comme
-contexte texte prêt à insérer dans le prompt du LLM.
+Query → embedding → top-k closest passages, returned as
+text context ready to insert into the LLM prompt.
 """
 
-# Doit être importé avant sentence_transformers/chromadb : positionne
-# HF_HUB_OFFLINE avant que huggingface_hub ne lise la variable d'env.
+# Must be imported before sentence_transformers/chromadb: sets
+# HF_HUB_OFFLINE before huggingface_hub reads the env var.
 from src.config import CHROMA_COLLECTION, CHROMA_DIR, EMBEDDING_MODEL, RAG_TOP_K
 
 import chromadb
@@ -15,8 +15,8 @@ _model: SentenceTransformer | None = None
 
 
 def _get_model() -> SentenceTransformer:
-    # Chargé une seule fois par process : le modèle d'embedding a un coût
-    # mémoire non négligeable, pas question de le recharger à chaque requête.
+    # Loaded once per process: the embedding model has a non-negligible
+    # memory cost, no question of reloading it on every request.
     global _model
     if _model is None:
         _model = SentenceTransformer(EMBEDDING_MODEL)
@@ -24,9 +24,9 @@ def _get_model() -> SentenceTransformer:
 
 
 def retrieve(query: str, top_k: int = RAG_TOP_K) -> list[dict]:
-    """Retourne les top_k passages du corpus les plus pertinents pour la requête.
+    """Returns the top_k corpus passages most relevant to the query.
 
-    Chaque résultat : {"text": ..., "source": ..., "distance": ...}
+    Each result: {"text": ..., "source": ..., "distance": ...}
     """
     client = chromadb.PersistentClient(
         path=str(CHROMA_DIR),
@@ -36,7 +36,7 @@ def retrieve(query: str, top_k: int = RAG_TOP_K) -> list[dict]:
         collection = client.get_collection(CHROMA_COLLECTION)
     except Exception as exc:
         raise RuntimeError(
-            "Index Chroma introuvable. Lancer d'abord : python -m src.rag.ingest"
+            "Chroma index not found. Run first: python -m src.rag.ingest"
         ) from exc
 
     embedding = _get_model().encode([query]).tolist()

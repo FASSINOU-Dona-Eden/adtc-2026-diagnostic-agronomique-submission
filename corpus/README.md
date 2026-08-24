@@ -1,14 +1,14 @@
-# Corpus agronomique de référence
+# Reference Agronomic Corpus
 
-Fiches techniques sur le stress hydrique (seuils d'alerte, recommandations par culture),
-consultées localement par le RAG (vectorisées via `src/rag/ingest.py`).
+Technical sheets on water stress (alert thresholds, recommendations by crop),
+consulted locally by the RAG (vectorized via `src/rag/ingest.py`).
 
-- `seuils_alerte.md` — grille de niveaux (Normal/Vigilance/Alerte/Critique), synchronisée
-  avec `src/config.py::classify_niveau`.
-- `stress_hydrique_pomme_de_terre.md` — sensibilité par stade de croissance, symptômes,
-  impact sur le rendement.
-- `recommandations_irrigation.md` — actions recommandées par niveau de stress.
+- `seuils_alerte.md` — level grid (Normal/Vigilance/Alert/Critical), synchronized
+  with `src/config.py::classify_niveau`.
+- `stress_hydrique_pomme_de_terre.md` — sensitivity by growth stage, symptoms,
+  impact on yield.
+- `recommandations_irrigation.md` — recommended actions by stress level.
 
-Contenu suffisant pour la démo (cohérent avec la grille de seuils, une seule culture —
-pomme de terre, alignée sur le dataset utilisé). Ce n'est pas un corpus exhaustif ni
-sourcé académiquement : voir la note de portée en tête de chaque fiche.
+Content sufficient for the demo (consistent with the threshold grid, a single crop —
+potato, aligned with the dataset used). This is not an exhaustive or
+academically sourced corpus: see the scope note at the top of each sheet.

@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
-"""Calcul du NDVI à partir des canaux spectraux bruts (cahier des charges
-§6.2, bonus §11) — pas de l'IA, juste la formule :
+"""Computes NDVI from the raw spectral channels (specification
+§6.2, bonus §11) — no AI, just the formula:
 
     NDVI = (NIR - Red) / (NIR + Red)
 
-Objectif : prouver qu'on maîtrise la méthode de calcul du stress hydrique
-« à la main », plutôt que de se contenter de recopier le résultat déjà
-présent dans les annotations du dataset (utilisé par
+Goal: prove mastery of the water-stress computation method
+"by hand," rather than simply copying the result already
+present in the dataset's annotations (used by
 `src/seed_data.py` / `scripts/extract_dataset_stress.py`).
 
-Ce script fait deux choses :
-1. Calcule le NDVI moyen par zone (bounding box) à partir des canaux Red
-   et Near-Infrared bruts, pour les 9 scènes déjà utilisées dans les
-   missions de démo (PARC-01 à PARC-04).
-2. Compare le ratio de zones "stressées selon le NDVI" (seuillage) au
-   ratio de zones "stressées selon les annotations" déjà utilisé dans
-   `src/seed_data.py`, pour valider — ou nuancer — la méthode.
+This script does two things:
+1. Computes the average NDVI per zone (bounding box) from the raw Red
+   and Near-Infrared channels, for the 9 scenes already used in the
+   demo missions (PARC-01 through PARC-04).
+2. Compares the ratio of zones "stressed according to NDVI" (thresholding)
+   to the ratio of zones "stressed according to the annotations" already
+   used in `src/seed_data.py`, to validate — or nuance — the method.
 
-Objectif de démonstration : pas d'optimisation, pas de traitement
-d'image avancé (pas de recalage, pas de correction radiométrique) — la
-formule appliquée directement sur les canaux bruts du dataset suffit à
-démontrer la méthode.
+Demonstration purpose: no optimization, no advanced image
+processing (no registration, no radiometric correction) — the
+formula applied directly to the dataset's raw channels is enough to
+demonstrate the method.
 
-Usage : python scripts/compute_ndvi.py [--dataset-dir PATH]
+Usage: python scripts/compute_ndvi.py [--dataset-dir PATH]
 """
 
 import argparse
@@ -34,9 +34,9 @@ from PIL import Image
 
 DEFAULT_DATASET_DIR = Path.home() / "adtc-2026" / "multispectral-potato-plants-images-DatasetNinja"
 
-# Les 9 scènes déjà utilisées dans src/seed_data.py, avec le ratio de
-# zones stressées "annotations" (stressed/total, cf. commentaires de
-# seed_data.py) pour comparaison directe.
+# The 9 scenes already used in src/seed_data.py, with the "annotations"
+# stressed-zone ratio (stressed/total, cf. seed_data.py's comments)
+# for direct comparison.
 MISSIONS_DEMO = [
     # (scene_id, split, parcelle_id, zones_stressees, zones_totales)
     ("Image_102", "train", "PARC-01", 2, 11),
@@ -57,9 +57,9 @@ def _load_channel(dataset_dir: Path, split: str, scene_id: str, channel: str) ->
 
 
 def _load_boxes(dataset_dir: Path, split: str, scene_id: str) -> list[dict]:
-    # N'importe quel canal spectral (Red/NIR/Green/Red-Edge) donne les
-    # mêmes coordonnées de boîtes, vérifié : mêmes objets, même ordre,
-    # même repère 416x416 pour les 4 (seul le canal RGB est à 750x750).
+    # Any spectral channel (Red/NIR/Green/Red-Edge) gives the
+    # same box coordinates, verified: same objects, same order,
+    # same 416x416 frame for all 4 (only the RGB channel is 750x750).
     ann_path = dataset_dir / split / "ann" / f"Red_Channel_Image_{scene_id.split('_')[1]}.jpg.json"
     data = json.loads(ann_path.read_text(encoding="utf-8"))
     return data["objects"]
@@ -81,18 +81,18 @@ def main() -> None:
 
     if not args.dataset_dir.exists():
         raise SystemExit(
-            f"Dataset introuvable : {args.dataset_dir}\n\n"
-            "Pour reproduire ce calcul, télécharger le dataset public "
+            f"Dataset not found: {args.dataset_dir}\n\n"
+            "To reproduce this computation, download the public dataset "
             "*Multispectral Potato Plants Images* (Butte, Vakanski, Duellman "
-            "et al., 2021 — University of Idaho) :\n"
+            "et al., 2021 — University of Idaho):\n"
             "  https://www.webpages.uidaho.edu/vakanski/Multispectral_Images_Dataset.html\n"
-            "puis relancer avec --dataset-dir pointant vers le dossier téléchargé.\n\n"
-            "Le résultat déjà obtenu (corrélation r=0,89 avec les annotations, "
-            "9 scènes) est documenté dans REPORT.md et docs/cahier-des-charges.md "
-            "§6.2 — pas besoin de relancer ce script pour le consulter."
+            "then rerun with --dataset-dir pointing at the downloaded folder.\n\n"
+            "The result already obtained (correlation r=0.89 with the annotations, "
+            "9 scenes) is documented in REPORT.md and docs/cahier-des-charges.md "
+            "§6.2 — no need to rerun this script to see it."
         )
 
-    # --- Étape 1 : NDVI par zone, pour les 9 scènes ---
+    # --- Step 1: NDVI per zone, for the 9 scenes ---
     par_scene: dict[str, list[tuple[str, float]]] = {}
     tous_ndvi_healthy: list[float] = []
     tous_ndvi_stressed: list[float] = []
@@ -112,23 +112,23 @@ def main() -> None:
                 tous_ndvi_stressed.append(ndvi)
         par_scene[scene_id] = resultats
 
-    # --- Étape 2 : seuil global, calibré sur les 2 groupes annotés ---
+    # --- Step 2: global threshold, calibrated on the 2 annotated groups ---
     moyenne_healthy = float(np.mean(tous_ndvi_healthy))
     moyenne_stressed = float(np.mean(tous_ndvi_stressed))
     seuil = (moyenne_healthy + moyenne_stressed) / 2
 
-    print("=== NDVI moyen par groupe annoté (toutes zones des 9 scènes confondues) ===")
-    print(f"  healthy  (n={len(tous_ndvi_healthy):>3}) : NDVI moyen = {moyenne_healthy:.3f}")
-    print(f"  stressed (n={len(tous_ndvi_stressed):>3}) : NDVI moyen = {moyenne_stressed:.3f}")
-    print(f"  Seuil retenu (milieu des deux moyennes)   : {seuil:.3f}")
+    print("=== Average NDVI per annotated group (all zones across the 9 scenes) ===")
+    print(f"  healthy  (n={len(tous_ndvi_healthy):>3}): average NDVI = {moyenne_healthy:.3f}")
+    print(f"  stressed (n={len(tous_ndvi_stressed):>3}): average NDVI = {moyenne_stressed:.3f}")
+    print(f"  Threshold used (midpoint of the two averages) : {seuil:.3f}")
     print(
-        "  -> Une zone est classée 'stressée selon le NDVI' si son NDVI moyen "
-        f"est inférieur à {seuil:.3f}.\n"
+        "  -> A zone is classified 'stressed according to NDVI' if its average NDVI "
+        f"is below {seuil:.3f}.\n"
     )
 
-    # --- Étape 3 : comparaison ratio NDVI vs ratio annotations, par mission ---
-    print("=== Comparaison par mission : ratio NDVI vs ratio annotations (déjà utilisé dans seed_data.py) ===")
-    print(f"{'Scène':<12}{'Parcelle':<10}{'Ratio annot.':<14}{'Ratio NDVI':<14}{'Écart (pts)':<12}")
+    # --- Step 3: NDVI ratio vs. annotation ratio comparison, per mission ---
+    print("=== Comparison per mission: NDVI ratio vs. annotation ratio (already used in seed_data.py) ===")
+    print(f"{'Scene':<12}{'Plot':<10}{'Annot. ratio':<14}{'NDVI ratio':<14}{'Gap (pts)':<12}")
 
     ecarts = []
     for scene_id, _split, parcelle, n_stress, n_total in MISSIONS_DEMO:
@@ -144,13 +144,13 @@ def main() -> None:
         )
 
     ecart_moyen_abs = float(np.mean([abs(e) for e in ecarts]))
-    print(f"\nÉcart absolu moyen entre les deux ratios : {ecart_moyen_abs:.1f} points de %.")
+    print(f"\nMean absolute gap between the two ratios: {ecart_moyen_abs:.1f} percentage points.")
 
     correlation = float(np.corrcoef(
         [n / t for _, _, _, n, t in MISSIONS_DEMO],
         [sum(1 for _, ndvi in par_scene[s] if ndvi < seuil) / t for s, _, _, _, t in MISSIONS_DEMO],
     )[0, 1])
-    print(f"Corrélation (ratio annotations vs ratio NDVI, sur les 9 scènes) : r = {correlation:.2f}")
+    print(f"Correlation (annotation ratio vs. NDVI ratio, across the 9 scenes): r = {correlation:.2f}")
 
 
 if __name__ == "__main__":

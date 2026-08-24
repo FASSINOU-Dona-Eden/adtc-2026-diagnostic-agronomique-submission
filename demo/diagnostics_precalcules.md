@@ -1,67 +1,52 @@
-# Diagnostics pré-générés — filet de sécurité démo
+# Pre-generated diagnoses — demo safety net
 
-> Régénérés le 24/08/2026 sur serveur Ollama isolé CPU-only (gemma3:4b, Q4_K_M),
-> avec le corpus agronomique et les données actuels (voir seed_data.py).
-> **Usage** : à garder sous la main pendant la démo pour affichage instantané
-> si la latence réelle (~65-100s/diagnostic) casse le rythme devant le jury.
-> Garder AU MOINS un scénario en génération live pendant la démo — le but
-> n'est pas de tricher, mais de prouver au jury que ce n'est pas pré-enregistré,
-> et de meubler le silence sur les autres.
-
----
-
-## PARC-01 — Alerte (54.5%, 3 mission(s) en historique)
-
-*Généré le 2026-08-24T19:27:42 — latence 84.9s*
-
-**Diagnostic agronomique - PARC-01 – Pomme de terre – 2026-08-15**
-
-Le niveau de stress hydrique mesuré pour la parcelle PARC-01 est actuellement à l'Alerte, avec un pourcentage de 54.5% des zones concernées (6/11). Cette situation s’est significativement aggravée depuis la mission précédente, enregistrant une augmentation de +21.2 points de % du stress hydrique.  Cette tendance à la dégradation continue, observée sur l'ensemble de l'historique des missions, est préoccupante et nécessite une attention particulière. Les données actuelles indiquent que le stress est plus important qu’à son début de saison (mission 2026-06-01) ou en juillet (mission 2026-07-05).
-
-En se basant sur la grille de lecture du ratio de stress, ce niveau d'alerte (35-60% de zones stressées) exige une intervention rapide. Les recommandations de `recommandations_irrigation.md` indiquent qu’il est impératif de lancer une irrigation ciblée sur les zones affectées dans les 48 heures suivantes.  Il est crucial de réaliser un diagnostic terrain pour exclure la possibilité d'un problème localisé, tel qu'une fuite ou un bouchon dans le système d'irrigation, ou encore la compaction du sol qui pourrait limiter l’efficacité de l’eau.
-
-**Recommandation actionnable :** Organiser immédiatement une inspection sur le terrain afin de confirmer la présence d'un problème d’irrigation localisé avant de procéder à une irrigation ciblée, en privilégiant les zones les plus touchées par le stress hydrique (6/11 zones).
-
+> Regenerated on 2026-08-25 in English, following the full translation of the
+> product (system prompt, corpus, pipeline), on an isolated CPU-only Ollama server
+> (gemma3:4b, Q4_K_M).
+> **Usage**: keep on hand during the demo/rehearsal for instant display
+> if the real latency (~80-100s/diagnosis) breaks the pace in front of the jury.
+> Keep AT LEAST one scenario generated live during the demo — the goal
+> is not to cheat, it's to prove to the jury it isn't pre-recorded,
+> and to fill the silence on the others.
 
 ---
 
-## PARC-02 — Normal (0.0%, 1 mission(s) en historique)
+## PARC-01 — Alert (54.5%, 3 mission(s) in history)
 
-*Généré le 2026-08-24T19:28:55 — latence 65.9s*
+*Generated on 2026-08-25T00:38:15 — latency 89.6s*
 
-**Diagnostic Agronome – Parcelle PARC-02 – Pomme de terre – 2026-08-10**
+Okay, here’s an agronomic diagnosis for PARC-01 based on the provided data:
 
-Le niveau de stress hydrique mesuré pour la parcelle PARC-02 est actuellement classé comme "Normal", avec un ratio de zones stressées à 0%. L’historique, étant insuffisant, ne permet pas d'établir de tendance.  Cela signifie que, selon les seuils définis dans `seuils_alerte.md`, la situation actuelle présente un niveau de risque faible en termes de stress hydrique pour la culture de pommes de terre.  D’après le document `recommandations_irrigation.md`, ce niveau normal justifie une surveillance de routine sans action immédiate. Cependant, compte tenu du manque d'historique, il est crucial d'être vigilant et de surveiller l'évolution de la situation.
-
-**Recommandation Actionnable :** Effectuer une inspection visuelle rapide de la parcelle PARC-02 pour détecter d’éventuels signes de stress (cuirasses fermées, jaunissement des feuilles) et vérifier le bon état de fonctionnement de l'équipement d'irrigation avant toute nouvelle observation.
-
+The drone imagery indicates a significant water stress issue across 6 out of 11 zones within the potato plot (54.5%). This represents a concerning escalation, as the ‘Alert’ level was previously determined and the trend analysis demonstrates a continuous, worsening degradation in water-stressed conditions over time – specifically, an increase of +21.2 percentage points since the previous mission on 2026-07-05.  Considering the potato crop is currently in its tuberization stage, and referencing our agronomic corpus knowledge, high water stress at this point can severely impact yield potential. The historical data shows a gradual increase in stress levels commencing from the start of the season, suggesting a persistent issue demanding immediate attention. According to the `recommandations_irrigation.md` document, when stress exceeds 60%, it necessitates immediate irrigation, prioritizing the most affected zones first.  Furthermore, given the trend and the potential for other issues mimicking water-stress symptoms, I recommend scheduling a prompt field visit within the next 24 hours to conduct a thorough assessment of each zone’s health – checking for disease or nutrient deficiencies alongside evaluating the water status.
 
 ---
 
-## PARC-03 — Vigilance (22.2%, 3 mission(s) en historique)
+## PARC-02 — Normal (0.0%, 1 mission(s) in history)
 
-*Généré le 2026-08-24T19:30:43 — latence 97.9s*
+*Generated on 2026-08-25T00:39:44 — latency 81.0s*
 
-**Diagnostic Agronome - PARC-03 – Pomme de terre – 2026-08-12**
+Okay, here’s an agronomic diagnosis for PARC-02 based on the provided data:
 
-Le niveau actuel de stress hydrique sur la parcelle PARC-03 est classé à "Vigilance", ce qui correspond à un ratio de zones stressées de 22.2% (sur 9 zones). Cette évaluation se situe dans une zone d'alerte selon les seuils définis dans le document `seuils_alerte.md`, et est en baisse (-9.0 points de % par rapport à la mission précédente du 2026-07-20). L’historique récent montre une tendance générale à l’amélioration, avec une diminution progressive des niveaux de stress hydrique, bien que la parcelle reste actuellement confrontée à un stress significatif.
-
-Ce niveau de stress, compris entre 15% et 35%, nécessite une surveillance attentive. La tendance actuelle, bien qu'amélioratrice, ne suffit pas à garantir un rendement optimal, surtout en fin de cycle pour la pomme de terre. Il est crucial de comprendre les causes du stress identifié, car le document `recommandations_irrigation.md` souligne la nécessité d’écarter des problèmes locaux comme des fuites ou des obstructions dans le système d'irrigation.
-
-La grille de lecture `seuils_alerte.md` recommande une vérification de l’irrigation sur les zones stressées sous 3-5 jours, afin d'identifier si la situation est stabilisée ou nécessite une intervention plus rapide.  Il est impératif de confirmer que le stress est effectivement lié à un déficit hydrique général plutôt qu'à des problèmes isolés du système.
-
-**Recommandation Actionnable :** Organiser une inspection terrain des 3 prochaines zones les plus touchées par le stress hydrique (selon la cartographie actuelle). Examiner attentivement les équipements d’irrigation pour détecter toute fuite ou obstruction et ajuster l’arrosage si nécessaire, en privilégiant une irrigation ciblée dans un premier temps.
-
+The drone mission indicates a remarkably low water stress level of 0.0% across the entire potato plot (PARC-02), and the level is classified as ‘Normal’.  Crucially, there's no historical data to establish an evolution or trend since this is the first recorded measurement for this plot. However, based on agronomic knowledge regarding potato crops, particularly during the tuberization stage – which we understand occurs between 6 and 10 weeks after planting – water stress at this point significantly impacts tuber size and ultimately yield, even if the plant remains alive. The corpus highlights that the potato crop is notably sensitive to deficits during tuberization. Given the current timing of the mission (approximately 6-10 weeks post-planting), monitoring for any changes in condition is vital. Therefore, I recommend implementing a regular visual inspection of the plants at this stage to confirm continued optimal conditions and assess for the early signs of stress that could develop.
 
 ---
 
-## PARC-04 — Critique (77.8%, 2 mission(s) en historique)
+## PARC-03 — Vigilance (22.2%, 3 mission(s) in history)
 
-*Généré le 2026-08-24T19:31:59 — latence 67.9s*
+*Generated on 2026-08-25T00:41:31 — latency 99.6s*
 
-Diagnostic agronomique – PARC-04, Pomme de terre – 2026-08-14
+Okay, here’s an agronomic diagnosis for PARC-03 based on the provided data:
 
-Le niveau de stress hydrique détecté est actuellement critique à 77.8% de la parcelle, sur 7 des 9 zones échantillonnées. Cette situation s'aggrave, avec une augmentation de +20.7 points de % depuis la mission précédente du 2026-07-28, et se caractérise par une tendance de dégradation continue enregistrée à chaque observation.  Cette progression significative, en particulier dans le contexte d’une vague de chaleur prolongée observée précédemment (mission du 2026-07-28), indique un problème hydrique majeur affectant la culture de pommes de terre.  Le ratio de stress dépasse largement les seuils de vigilance et d'alerte définis, confirmant une situation critique nécessitant une action immédiate. Conformément aux recommandations contenues dans `recommandations_irrigation.md`, cette situation justifie un intervention sous 48h avec une irrigation ciblée sur les zones stressées. Il est impératif de vérifier rapidement si le problème est localisé (fuite, bouchon) ou s'il reflète un déficit hydrique général nécessitant une adaptation de la stratégie d'irrigation.
+The drone mission on 2026-08-12 indicates a current water stress level of 22.2% across two zones within the potato plot (PARC-03). This represents a significant decrease from the high stress levels observed in the previous mission on 2026-07-01, having reduced by 9.0 percentage points since then – indicating a continuous improvement trend as reported in the history. While this is positive, the ongoing drop in water stress across missions suggests a potential for further reduction if irrigation strategies are maintained.  According to our agronomic corpus, potato crops are notably sensitive during the tuberization stage, and visual symptoms of water stress can directly impact yield, which aligns with the observed trend. Given that the current level is below the critical threshold of 60% as defined in `seuils_alerte.md`, immediate irrigation isn’t currently required based on standard best practices. However, because a continuous reduction in stress has been recorded and it's important to rule out any other factors influencing symptoms, I recommend scheduling a prompt field visit to visually assess the affected zones and confirm that water stress remains the primary driver of these readings.
 
+---
+
+## PARC-04 — Critical (77.8%, 2 mission(s) in history)
+
+*Generated on 2026-08-25T00:43:03 — latency 83.1s*
+
+Okay, here’s an agronomic diagnosis for PARC-04 based on the provided data:
+
+The drone imagery indicates a critical water stress level of 77.8% across 7 out of 9 zones within the potato plot. This represents a significant and concerning increase – a rise of +20.7 percentage points since the previous mission conducted on 2026-07-28, where stress was measured at 57.1%. The trend observed over all past missions demonstrates a continuous, worsening degradation of water availability within this plot.  Given the potato crop’s sensitivity to water stress during tuberization and the reported historical context of a prolonged heatwave, coupled with this escalating trend, we are seeing a serious issue impacting yield potential. According to our agronomic corpus, a critical zone exceeding 60% stress necessitates immediate irrigation action, prioritizing the most affected areas. Therefore, I recommend scheduling an urgent field visit within the next two hours to visually assess the situation alongside a prompt irrigation application, focusing initially on the zones reporting the highest water stress levels, while simultaneously investigating any potential underlying causes beyond simple drought like disease or nutrient deficiency that might be exacerbating the symptoms.
 
 ---

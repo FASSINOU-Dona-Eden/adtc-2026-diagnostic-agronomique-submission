@@ -1,9 +1,9 @@
-"""Structures de données partagées par le pipeline.
+"""Shared data structures for the pipeline.
 
-⚠️ Ces classes reflètent la forme des données telles que décrites dans le
-cahier des charges (§6.2 chaîne NDVI). Tant que Piste B n'a pas livré
-l'extraction réelle du dataset Idaho, les champs peuvent bouger légèrement
-une fois qu'on voit la structure exacte des annotations.
+⚠️ These classes reflect the shape of the data as described in the
+specification document (§6.2 NDVI chain). As long as Track B has not
+delivered the real extraction of the Idaho dataset, the fields may shift
+slightly once the exact structure of the annotations is seen.
 """
 
 from dataclasses import dataclass, field
@@ -14,13 +14,13 @@ from src.config import classify_niveau
 
 @dataclass
 class MissionReading:
-    """Un relevé de stress hydrique pour une mission drone donnée."""
+    """A water stress reading for a given drone mission."""
 
     mission_id: str
     parcelle_id: str
     date: date
     culture: str
-    stress_ratio: float  # 0.0 - 1.0, part de la parcelle jugée stressée
+    stress_ratio: float  # 0.0 - 1.0, share of the plot judged stressed
     zones_stressees: int
     zones_totales: int
     notes: str = ""
@@ -31,17 +31,17 @@ class MissionReading:
 
     @property
     def niveau(self) -> str:
-        """Normal / Vigilance / Alerte / Critique — calculé, pas laissé au LLM.
+        """Normal / Vigilance / Alert / Critical — computed, not left to the LLM.
 
-        "Données insuffisantes" si zones_totales == 0 (aucune zone mesurée,
-        ex: panne capteur) — distinct de "Normal" (0% de stress mesuré sur
-        des zones valides). Voir classify_niveau."""
+        "Insufficient data" if zones_totales == 0 (no zone measured,
+        e.g. sensor failure) — distinct from "Normal" (0% stress measured
+        on valid zones). See classify_niveau."""
         return classify_niveau(self.stress_ratio, self.zones_totales)
 
 
 @dataclass
 class ParcelleHistorique:
-    """Historique des missions pour une parcelle, trié du plus ancien au plus récent."""
+    """History of missions for a plot, sorted from oldest to most recent."""
 
     parcelle_id: str
     missions: list[MissionReading] = field(default_factory=list)
@@ -50,32 +50,32 @@ class ParcelleHistorique:
         return self.missions[-1] if self.missions else None
 
     def evolution_stress(self) -> float | None:
-        """Delta en points de % entre les deux dernières missions (positif = ça empire)."""
+        """Delta in percentage points between the last two missions (positive = worsening)."""
         if len(self.missions) < 2:
             return None
         prev, curr = self.missions[-2], self.missions[-1]
         return round(curr.stress_pct - prev.stress_pct, 1)
 
     def tendance_globale(self) -> str:
-        """Tendance sur TOUT l'historique, pas juste les deux dernières missions.
+        """Trend across the ENTIRE history, not just the last two missions.
 
-        Calculée en code pour la même raison que `MissionReading.niveau` :
-        test du 22/08 sur PARC-03 (58% → 40% → 22%, baisse continue), un
-        modèle a quand même décrit "un retour vers un niveau plus élevé" —
-        une tendance inventée, absente des chiffres. En la calculant ici et
-        en l'imposant dans le prompt, on retire au LLM la possibilité de la
-        contredire.
+        Computed in code for the same reason as `MissionReading.niveau`:
+        a test on 08/22 on PARC-03 (58% → 40% → 22%, continuous drop), a
+        model still described "a return to a higher level" —
+        an invented trend, absent from the figures. By computing it here
+        and imposing it in the prompt, we remove the LLM's ability to
+        contradict it.
         """
         if len(self.missions) < 2:
-            return "historique insuffisant pour dégager une tendance"
+            return "insufficient history to establish a trend"
         deltas = [
             round(self.missions[i + 1].stress_pct - self.missions[i].stress_pct, 1)
             for i in range(len(self.missions) - 1)
         ]
         if all(d < 0 for d in deltas):
-            return "amélioration continue (baisse à chaque mission)"
+            return "continuous improvement (drop at every mission)"
         if all(d > 0 for d in deltas):
-            return "dégradation continue (hausse à chaque mission)"
+            return "continuous degradation (rise at every mission)"
         if all(d == 0 for d in deltas):
-            return "stable (aucun changement mission à mission)"
-        return "fluctuante (ni hausse ni baisse continue sur tout l'historique)"
+            return "stable (no change mission to mission)"
+        return "fluctuating (neither a continuous rise nor drop across the whole history)"

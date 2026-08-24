@@ -1,17 +1,17 @@
-"""Vectorisation du corpus agronomique dans ChromaDB (cahier des charges §4.2/§5).
+"""Vectorization of the agronomic corpus into ChromaDB (specification §4.2/§5).
 
-Découpe chaque fichier Markdown du corpus en chunks (par section ##), les
-transforme en embeddings via sentence-transformers, et les stocke dans une
-base ChromaDB persistante locale — pas d'appel réseau après le premier
-téléchargement du modèle d'embedding.
+Splits each Markdown file of the corpus into chunks (by ## section), turns
+them into embeddings via sentence-transformers, and stores them in a
+local persistent ChromaDB store — no network call after the embedding
+model's first download.
 
 Usage: python -m src.rag.ingest
 """
 
 import re
 
-# Doit être importé avant sentence_transformers/chromadb : positionne
-# HF_HUB_OFFLINE avant que huggingface_hub ne lise la variable d'env.
+# Must be imported before sentence_transformers/chromadb: sets
+# HF_HUB_OFFLINE before huggingface_hub reads the env var.
 from src.config import CHROMA_COLLECTION, CHROMA_DIR, CORPUS_DIR, EMBEDDING_MODEL
 
 import chromadb
@@ -19,13 +19,13 @@ from sentence_transformers import SentenceTransformer
 
 
 def chunk_markdown(text: str, source: str) -> list[dict]:
-    """Découpe un fichier Markdown en chunks par section de niveau ##.
+    """Splits a Markdown file into chunks by level-## section.
 
-    Chaque chunk garde le titre de section en tête pour donner du contexte
-    à l'embedding et au LLM au moment de la récupération.
+    Each chunk keeps the section title at the top to give context
+    to the embedding and to the LLM at retrieval time.
     """
-    # On ignore le bloc de citation "placeholder" en tête de fichier pour
-    # ne pas polluer les embeddings avec du méta-texte.
+    # Ignore the "placeholder" quote block at the top of the file so as
+    # not to pollute the embeddings with meta-text.
     text = re.sub(r"^> ⚠️.*?\n\n", "", text, flags=re.DOTALL)
 
     sections = re.split(r"\n(?=## )", text)
@@ -45,8 +45,8 @@ def build_index() -> None:
         settings=chromadb.Settings(anonymized_telemetry=False),
     )
 
-    # On repart d'une collection propre à chaque ingestion pour éviter les
-    # doublons si le corpus a changé entre deux runs.
+    # Start from a clean collection on every ingestion, to avoid
+    # duplicates if the corpus changed between two runs.
     try:
         client.delete_collection(CHROMA_COLLECTION)
     except Exception:
@@ -63,7 +63,7 @@ def build_index() -> None:
         all_chunks.extend(chunk_markdown(text, source=md_file.name))
 
     if not all_chunks:
-        print(f"Aucun fichier .md trouvé dans {CORPUS_DIR} (hors README.md).")
+        print(f"No .md file found in {CORPUS_DIR} (other than README.md).")
         return
 
     embeddings = model.encode([c["text"] for c in all_chunks]).tolist()
@@ -73,7 +73,7 @@ def build_index() -> None:
         metadatas=[{"source": c["source"]} for c in all_chunks],
         embeddings=embeddings,
     )
-    print(f"{len(all_chunks)} chunks indexés depuis {CORPUS_DIR} → {CHROMA_DIR}")
+    print(f"{len(all_chunks)} chunks indexed from {CORPUS_DIR} → {CHROMA_DIR}")
 
 
 if __name__ == "__main__":

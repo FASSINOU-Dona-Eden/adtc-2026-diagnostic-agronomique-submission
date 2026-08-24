@@ -1,8 +1,8 @@
-"""Stockage SQLite de l'historique des missions (cahier des charges §4.2).
+"""SQLite storage for the mission history (specification §4.2).
 
-Base légère, locale, sans dépendance réseau. Une ligne = une mission drone
-sur une parcelle, avec son ratio de stress hydrique déjà calculé (NDVI, cf.
-§6.2 — on ne recalcule rien ici, on stocke un résultat).
+Lightweight, local database, no network dependency. One row = one drone
+mission on a plot, with its water stress ratio already computed (NDVI, cf.
+§6.2 — nothing is recomputed here, a result is stored).
 """
 
 import sqlite3

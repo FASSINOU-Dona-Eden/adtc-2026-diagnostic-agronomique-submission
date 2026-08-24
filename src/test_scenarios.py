@@ -1,17 +1,17 @@
-"""Fait tourner le diagnostic sur PLUSIEURS scénarios de mission, pas un seul.
+"""Runs the diagnosis on SEVERAL mission scenarios, not just one.
 
-Couvre les 4 niveaux de la grille de lecture (corpus/seuils_alerte.md) :
-normal, vigilance, alerte, critique — plus un cas "sans historique" et un
-cas "tendance qui s'améliore" (piège classique : un LLM peut avoir un biais
-alarmiste par défaut). Correspond à la tâche Bloc 3 "itérer sur la qualité
-des diagnostics" (cahier des charges §7) et au critère de réussite §11
-("diagnostics clairs, corrects et actionnables sur plusieurs scénarios").
+Covers the 4 levels of the reading grid (corpus/seuils_alerte.md):
+normal, vigilance, alert, critical — plus a "no history" case and a
+"improving trend" case (a classic pitfall: an LLM can have a default
+alarmist bias). Corresponds to Block 3's "iterate on diagnosis quality"
+task (specification §7) and to success criterion §11
+("diagnoses that are clear, correct, and actionable across several scenarios").
 
-Fait aussi un contrôle automatique léger (pas un remplacement de la lecture
-humaine) : extrait tous les pourcentages mentionnés dans le texte généré et
-signale ceux qui ne correspondent à aucune valeur connue (mission courante,
-historique, ou seuils de la grille de lecture) — un chiffre qui n'est dans
-aucune de ces listes est probablement halluciné.
+Also runs a lightweight automatic check (not a replacement for human
+review): extracts every percentage mentioned in the generated text and
+flags any that do not match a known value (current mission,
+history, or the reading grid's thresholds) — a figure that isn't in
+any of these lists is probably hallucinated.
 
 Usage: python -m src.test_scenarios [--model gemma3:1b]
 """
@@ -23,8 +23,8 @@ import sqlite3
 from src.db import DB_PATH, get_historique, init_db
 from src.diagnostic import diagnose
 
-# Seuils de la grille de lecture (corpus/seuils_alerte.md) : légitimes à
-# citer même s'ils ne sont pas dans les données de la mission.
+# Thresholds from the reading grid (corpus/seuils_alerte.md): legitimate to
+# cite even if they are not in the mission's data.
 SEUILS_CONNUS = {0, 10, 15, 20, 35, 40, 48, 60}
 
 
@@ -58,7 +58,7 @@ def run(model: str | None = None) -> None:
     init_db()
     parcelles = _parcelles_connues()
     if not parcelles:
-        print("Aucune parcelle en base. Lancer d'abord : python -m src.seed_data")
+        print("No plot in the database. Run first: python -m src.seed_data")
         return
 
     for parcelle_id in parcelles:
@@ -67,26 +67,26 @@ def run(model: str | None = None) -> None:
         attendus = _valeurs_attendues(historique)
 
         print("=" * 70)
-        print(f"Parcelle {parcelle_id} — {mission.culture} — {len(historique.missions)} mission(s) en historique")
-        print(f"Stress actuel : {mission.stress_pct}% ({mission.zones_stressees}/{mission.zones_totales} zones)")
+        print(f"Plot {parcelle_id} — {mission.culture} — {len(historique.missions)} mission(s) in history")
+        print(f"Current stress: {mission.stress_pct}% ({mission.zones_stressees}/{mission.zones_totales} zones)")
         evolution = historique.evolution_stress()
-        print(f"Évolution réelle : {evolution if evolution is not None else 'aucun historique antérieur'}")
+        print(f"Real evolution: {evolution if evolution is not None else 'no prior history'}")
         print("-" * 70)
 
         _, result = diagnose(mission, model=model)
         print(result.text)
-        print(f"\n(latence : {result.latency_s:.1f}s)")
+        print(f"\n(latency: {result.latency_s:.1f}s)")
 
         suspects = _chiffres_suspects(result.text, attendus)
         if suspects:
-            print(f"\n⚠️  Chiffres à vérifier manuellement (absents des données/seuils connus) : {suspects}")
+            print(f"\n⚠️  Figures to check manually (absent from known data/thresholds): {suspects}")
         else:
-            print("\n✅ Aucun chiffre suspect détecté (contrôle automatique léger — relire quand même le texte).")
+            print("\n✅ No suspicious figure detected (lightweight automatic check — review the text anyway).")
         print()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Teste le diagnostic sur plusieurs scénarios de mission")
-    parser.add_argument("--model", default=None, help="Modèle Ollama à utiliser (ex: gemma3:1b)")
+    parser = argparse.ArgumentParser(description="Tests the diagnosis across several mission scenarios")
+    parser.add_argument("--model", default=None, help="Ollama model to use (e.g. gemma3:1b)")
     args = parser.parse_args()
     run(model=args.model)

@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
-# Force une inférence 100% CPU (sans offload GPU) pour approximer le laptop
-# grand public "sans GPU dédié" ciblé par le concours (cahier des charges §1).
+# Forces 100% CPU inference (no GPU offload) to approximate the "no
+# dedicated GPU" consumer laptop targeted by the contest (specification §1).
 #
-# Pourquoi ce script existe : sur une machine de dev avec GPU, Ollama utilise
-# le GPU automatiquement, ce qui donne des chiffres de RAM/latence non
-# représentatifs (mesuré : ~4,4 Go avec GPU vs ~4,0 Go annoncé par Ollama
-# lui-même en CPU pur pour gemma3:4b — les deux ne se comparent pas
-# directement, le GPU déporte une partie du poids en VRAM).
+# Why this script exists: on a dev machine with a GPU, Ollama automatically
+# uses the GPU, which gives non-representative RAM/latency figures
+# (measured: ~4.4 GB with GPU vs. ~4.0 GB announced by Ollama itself
+# in pure CPU mode for gemma3:4b — the two don't compare
+# directly, the GPU offloads part of the weights to VRAM).
 #
-# NB — tentative abandonnée : limiter la RAM via un cgroup systemd
-# (MemoryMax) pour simuler un laptop 8 Go NE FONCTIONNE PAS avec Ollama :
-# il fait son propre contrôle d'admission en lisant /proc/meminfo (mémoire
-# système réelle), pas la limite du cgroup. Donc pas de simulation fiable
-# de "8 Go" sans VM ou machine cible réelle — seul le forçage CPU (ce
-# script) est fiable à faire depuis ce poste de dev.
+# NB — abandoned attempt: capping RAM via a systemd cgroup
+# (MemoryMax) to simulate an 8 GB laptop DOES NOT WORK with Ollama:
+# it does its own admission control by reading /proc/meminfo (real
+# system memory), not the cgroup limit. So there is no reliable
+# simulation of "8 GB" without a VM or the real target machine — only
+# CPU forcing (this script) is reliable to do from this dev machine.
 #
-# Usage : ./scripts/profile_cpu_only.sh
-# Nécessite : assez de RAM RÉELLEMENT libre sur la machine (ce script ne
-# peut rien simuler ici) — fermer les autres applis avant de lancer si le
-# chargement du modèle échoue avec "model requires more system memory".
+# Usage: ./scripts/profile_cpu_only.sh
+# Requires: enough REALLY free RAM on the machine (this script cannot
+# simulate that) — close other apps before running if model loading
+# fails with "model requires more system memory".
 
 set -uo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PORT=11501
 
-echo "=== Lancement d'un serveur Ollama isolé, GPU masqué (CUDA_VISIBLE_DEVICES=-1) ==="
+echo "=== Starting an isolated Ollama server, GPU hidden (CUDA_VISIBLE_DEVICES=-1) ==="
 CUDA_VISIBLE_DEVICES=-1 OLLAMA_HOST=127.0.0.1:$PORT OLLAMA_MODELS=/usr/share/ollama/.ollama/models \
   nohup ollama serve > /tmp/ollama_cpu_only.log 2>&1 &
 SERVER_PID=$!
@@ -36,7 +36,7 @@ for i in $(seq 1 30); do
 done
 
 if ! grep -q "library=cpu" /tmp/ollama_cpu_only.log; then
-  echo "ATTENTION : le GPU n'a peut-être pas été masqué, vérifier /tmp/ollama_cpu_only.log"
+  echo "WARNING: the GPU may not have been hidden, check /tmp/ollama_cpu_only.log"
 fi
 
 cd "$REPO_DIR" && source .venv/bin/activate
