@@ -30,6 +30,12 @@ The team was completed specifically for this competition:
 - **Fresnel Satignon** — software engineering student, skills in computer vision / machine learning / deep learning.
 - **Fifamè Heureuse Fassinou** — recent high-school graduate, Top 20 2026 of Benin's National AI Olympiad, brought onto the team on the strength of that result.
 
+### African Use Case
+
+This project addresses a concrete constraint faced by farmers and agronomists across West Africa: limited or unreliable internet connectivity, which makes cloud-based AI diagnostic tools impractical for field use. The assistant runs entirely offline on commodity hardware already available locally, translating pre-quantified water-stress measurements into clear, actionable diagnostics in natural language — without requiring the operator to interpret raw sensor data themselves. The team includes Beninese contributors, including a high-school student ranked in the Top 20 of Benin's 2026 National AI Olympiad, reflecting a direct investment in local talent development alongside the technical build.
+
+*(`african_alpha_claim: true` in `metadata.json`, on this basis.)*
+
 ---
 
 ## Design Decisions
