@@ -1,7 +1,6 @@
 # Pre-generated diagnoses — demo safety net
 
-> Regenerated on 2026-08-25 in English, after renaming the corpus/docs files
-> to English filenames, on an isolated CPU-only Ollama server (gemma3:4b, Q4_K_M).
+> Generated on 2026-08-25 on an isolated CPU-only Ollama server (gemma3:4b, Q4_K_M).
 > **Usage**: keep on hand during the demo/rehearsal for instant display
 > if the real latency (~85-100s/diagnosis) breaks the pace in front of the jury.
 > Keep AT LEAST one scenario generated live during the demo — the goal

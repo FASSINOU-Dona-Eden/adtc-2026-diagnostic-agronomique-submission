@@ -1,10 +1,12 @@
 # Technical Report — Post-Flight Agronomic Diagnostic Assistant
 
-**Team ID:** TODO-team-id-portail-ADTF (to be completed, see `metadata.json`)
+**Team ID:** pending — see note below
 **Domain:** agriculture
 **Model:** Gemma3-4B-IT-Q4_K_M
 
-*Report reorganized on 2026-08-24 from `docs/submission-dossier.md` and `docs/specification.md` (French-language internal documents), to follow the structure required by the ADTC 2026 template (Problem / Design Decisions / Constraints / Benchmarks). This is the document intended for the profiler and the judges; the full reasoning and traceability detail remains in `docs/`.*
+*This document follows the structure required by the ADTC 2026 template (Problem / Design Decisions / Constraints / Benchmarks) and is the one intended for the profiler and the judges; the full reasoning and traceability detail lives in `docs/specification.md` and `docs/submission-dossier.md`.*
+
+> **Team ID note.** `metadata.json`'s `team_id` field is set to a clearly-marked placeholder (`PENDING-ADTF-PORTAL-REGISTRATION-ID`), not a real value. The template's field reference defines it as "your unique team ID as registered on the ADTF portal" — a platform-issued identifier, not a name we can choose ourselves. It was not found on the Devpost submission portal after a search; rather than invent a plausible-looking value that could mismatch the team's real registration record, the field is left as an explicit, visible placeholder until the actual ID is located. **To resolve before final submission:** locate the ID on the ADTF/Devpost portal and update `metadata.json`.
 
 ---
 
@@ -78,11 +80,11 @@ A test on 4 scenarios (08/22) showed `gemma3:4b` getting the tier wrong by deriv
 
 ### Alternative tested and abandoned — bilingual synthesis in a West African language
 
-With the aim of strengthening the local grounding of the use case (beyond the product's main language — French at the time of this test, since it predates the full English translation of the pipeline described throughout the rest of this report), an attempt was made to have `gemma3:4b` (**same model, no re-quantization — the exact `gemma3:4b` already validated by the profiler**) produce, in addition to the normal diagnosis, a one-line summary title in Hausa (the most widely spoken West African language among the options considered).
+With the aim of strengthening the local grounding of the use case beyond English, an attempt was made to have `gemma3:4b` (**same model, no re-quantization — the exact `gemma3:4b` already validated by the profiler**) produce, in addition to the normal diagnosis, a one-line summary title in Hausa (the most widely spoken West African language among the options considered).
 
 **Result: hallucination, the attempt was abandoned.** The model produced the sentence *"Ƙarshen wasanni da amfani da shi don guwar karkashin kasa"*, presented by the model itself as meaning "It is important to use it to improve yields." Independent verification (online Hausa dictionaries): `karshen wasanni` literally means "the end of games/matches," and `karkashin kasa` means "underground" (as in "subway") — a grammatically well-formed sentence using real Hausa words, but **bearing no relation whatsoever to irrigation, water stress, or an agricultural recommendation**. The model also did not follow the explicit instruction to say "language not confidently mastered" when in doubt — it produced a wrong answer with the same apparent confidence as a correct one.
 
-**Decision:** do not integrate this feature. Forcing a low-quality Hausa result would harm the project's credibility more than its absence would — consistent with the principle already applied elsewhere in this project (e.g., the VLM rejection above) of only presenting what has been rigorously verified. The diagnosis remains single-language (English, following the full translation of the product), where the model's reliability is established across all the tests in this report.
+**Decision:** do not integrate this feature. Forcing a low-quality Hausa result would harm the project's credibility more than its absence would — consistent with the principle already applied elsewhere in this project (e.g., the VLM rejection above) of only presenting what has been rigorously verified. The diagnosis remains single-language (English), where the model's reliability is established across all the tests in this report.
 
 ---
 
