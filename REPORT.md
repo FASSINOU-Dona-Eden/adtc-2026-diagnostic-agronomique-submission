@@ -1,4 +1,4 @@
-# Technical Report — Post-Flight Agronomic Diagnostic Assistant
+# Technical Report — Hapi Field
 
 **Team ID:** pending — see note below
 **Domain:** agriculture
@@ -11,6 +11,8 @@
 ---
 
 ## Problem
+
+**Hapi Field** takes its name from Hapi, the Egyptian deity of the Nile's flood and the fertility it brings to the land — a fitting reference for a tool built around turning water measurements into actionable guidance for farmers.
 
 **What the model solves, and for whom.** A field operator (farmer, agronomist) returns from a drone mission over a plot of land. They have already-measured water stress data (ratio of affected zones) but it is raw, uninterpreted. The tool turns these numbers into a **clear, natural-language, actionable diagnosis** — severity level, evolution compared to previous missions, concrete recommendation — enriched with the plot's history and a reference agronomic corpus.
 

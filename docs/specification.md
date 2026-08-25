@@ -1,4 +1,4 @@
-# Project Specification — ADTC 2026 Project
+# Project Specification — Hapi Field
 ## Mawudo Aerospace × Africa Deep Tech Challenge
 
 **Version:** 3.0 (open point 6 resolved on real data + LLM choice confirmed)

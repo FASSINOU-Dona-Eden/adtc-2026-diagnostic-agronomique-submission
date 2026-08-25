@@ -1,6 +1,8 @@
-# ADTC 2026 — Post-Flight Agronomic Diagnostic Assistant
+# Hapi Field
 
-> **100% offline** LLM application, running on a consumer laptop with **8 GB of RAM**, for the [Africa Deep Tech Challenge 2026](https://www.google.com/search?q=Africa+Deep+Tech+Challenge+2026).
+> Post-flight agronomic diagnostic assistant — **100% offline** LLM application, running on a consumer laptop with **8 GB of RAM**, for the [Africa Deep Tech Challenge 2026](https://www.google.com/search?q=Africa+Deep+Tech+Challenge+2026).
+>
+> Named after Hapi, the Egyptian deity of the Nile's flood and the fertility it brought to the land — a fitting namesake for a tool that turns water measurements into guidance for the field.
 
 **Mawudo Aerospace** · Submission deadline: **August 25, 2026**
 

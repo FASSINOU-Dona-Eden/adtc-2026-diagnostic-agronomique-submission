@@ -164,7 +164,7 @@ def _run_precalcule(parcelle_id: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Post-flight agronomic diagnosis (ADTC 2026)")
+    parser = argparse.ArgumentParser(description="Hapi Field — post-flight agronomic diagnosis (ADTC 2026)")
     parser.add_argument("--parcelle", default="PARC-01", help="Plot identifier")
     parser.add_argument(
         "--model",

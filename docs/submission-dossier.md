@@ -1,4 +1,4 @@
-# Submission Dossier — Post-Flight Agronomic Diagnostic Assistant
+# Submission Dossier — Hapi Field
 
 **Mawudo Aerospace × Africa Deep Tech Challenge 2026**
 **Compiled on August 24, 2026** from the decisions recorded in `docs/specification.md` (v3.0).
