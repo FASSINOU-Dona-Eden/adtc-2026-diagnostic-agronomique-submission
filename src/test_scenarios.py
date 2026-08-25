@@ -1,6 +1,6 @@
 """Runs the diagnosis on SEVERAL mission scenarios, not just one.
 
-Covers the 4 levels of the reading grid (corpus/seuils_alerte.md):
+Covers the 4 levels of the reading grid (corpus/alert_thresholds.md):
 normal, vigilance, alert, critical — plus a "no history" case and a
 "improving trend" case (a classic pitfall: an LLM can have a default
 alarmist bias). Corresponds to Block 3's "iterate on diagnosis quality"
@@ -23,7 +23,7 @@ import sqlite3
 from src.db import DB_PATH, get_historique, init_db
 from src.diagnostic import diagnose
 
-# Thresholds from the reading grid (corpus/seuils_alerte.md): legitimate to
+# Thresholds from the reading grid (corpus/alert_thresholds.md): legitimate to
 # cite even if they are not in the mission's data.
 SEUILS_CONNUS = {0, 10, 15, 20, 35, 40, 48, 60}
 

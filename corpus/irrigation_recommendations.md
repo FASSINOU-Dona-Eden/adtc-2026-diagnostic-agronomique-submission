@@ -1,7 +1,7 @@
 # Irrigation recommendations when stress is detected
 
 > **Standard irrigation best practices**, consistent with the tiers
-> in `seuils_alerte.md` — generic but agronomically valid
+> in `alert_thresholds.md` — generic but agronomically valid
 > recommendations, not certified guidance for a specific farm.
 
 ## Vigilance zone (15-35% stress)

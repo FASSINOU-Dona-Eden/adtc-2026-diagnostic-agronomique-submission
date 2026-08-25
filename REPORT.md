@@ -4,7 +4,7 @@
 **Domain:** agriculture
 **Model:** Gemma3-4B-IT-Q4_K_M
 
-*Report reorganized on 2026-08-24 from `docs/dossier-de-soumission.md` and `docs/cahier-des-charges.md` (French-language internal documents), to follow the structure required by the ADTC 2026 template (Problem / Design Decisions / Constraints / Benchmarks). This is the document intended for the profiler and the judges; the full reasoning and traceability detail remains in `docs/`.*
+*Report reorganized on 2026-08-24 from `docs/submission-dossier.md` and `docs/specification.md` (French-language internal documents), to follow the structure required by the ADTC 2026 template (Problem / Design Decisions / Constraints / Benchmarks). This is the document intended for the profiler and the judges; the full reasoning and traceability detail remains in `docs/`.*
 
 ---
 
@@ -70,7 +70,7 @@ The choice to "pre-compute stress with a classical method" (above) did not remai
 - Across the 9 demo scenes, thresholding at the midpoint of these two averages: **correlation r = 0.89** between the "stressed according to NDVI" ratio and the "stressed according to annotations" ratio already used for each diagnosis. Mean absolute gap: 8.7 percentage points.
 - **Reproducible in one command, with no dependency on the rest of the pipeline**: `python scripts/compute_ndvi.py` (see also the Constraints/Reproducibility section below).
 
-**Why this is proof of methodological robustness, not just a flattering number:** two completely independent calculation methods (human-annotation counting *vs.* physical computation on raw pixels) converge strongly on the same 9 scenes. This is not a number shown because it looks good — a notable gap exists (scene `Image_205`, PARC-03: 22.2-point gap) and is documented rather than hidden: the 2 zones annotated `stressed` in this scene have an NDVI above the global threshold, plausibly a mild/early-stage stress visible to the human annotator but not strongly reflected in the zone's average NDVI — a known limitation of simple thresholding, not a computation error. Full detail (per scene, per group) is in `docs/cahier-des-charges.md` §6.2.
+**Why this is proof of methodological robustness, not just a flattering number:** two completely independent calculation methods (human-annotation counting *vs.* physical computation on raw pixels) converge strongly on the same 9 scenes. This is not a number shown because it looks good — a notable gap exists (scene `Image_205`, PARC-03: 22.2-point gap) and is documented rather than hidden: the 2 zones annotated `stressed` in this scene have an NDVI above the global threshold, plausibly a mild/early-stage stress visible to the human annotator but not strongly reflected in the zone's average NDVI — a known limitation of simple thresholding, not a computation error. Full detail (per scene, per group) is in `docs/specification.md` §6.2.
 
 ### Rejected alternative #2 — letting the LLM classify/compute
 

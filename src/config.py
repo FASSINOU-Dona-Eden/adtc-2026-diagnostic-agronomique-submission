@@ -45,7 +45,7 @@ RAG_TOP_K = 3
 
 # --- Business thresholds ---
 # Level grid — must stay in sync with the table in
-# corpus/seuils_alerte.md (adjust together if Track B changes the thresholds).
+# corpus/alert_thresholds.md (adjust together if Track B changes the thresholds).
 #
 # Computed in code rather than left to the LLM: a test on 4 scenarios
 # (08/22) showed gemma3:4b getting the tier wrong by deriving the

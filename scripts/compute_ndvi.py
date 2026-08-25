@@ -88,7 +88,7 @@ def main() -> None:
             "  https://www.webpages.uidaho.edu/vakanski/Multispectral_Images_Dataset.html\n"
             "then rerun with --dataset-dir pointing at the downloaded folder.\n\n"
             "The result already obtained (correlation r=0.89 with the annotations, "
-            "9 scenes) is documented in REPORT.md and docs/cahier-des-charges.md "
+            "9 scenes) is documented in REPORT.md and docs/specification.md "
             "§6.2 — no need to rerun this script to see it."
         )
 

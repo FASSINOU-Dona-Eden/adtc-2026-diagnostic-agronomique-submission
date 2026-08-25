@@ -14,7 +14,7 @@ field time series. See also the equivalent note in §6.1 and Block 5
 of the specification document.
 
 4 plots covering distinct scenarios (cf. the reading grid in
-corpus/seuils_alerte.md), so as not to judge diagnosis quality on
+corpus/alert_thresholds.md), so as not to judge diagnosis quality on
 a single case — see src/test_scenarios.py to run them all.
 
 Usage: python -m src.seed_data

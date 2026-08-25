@@ -14,7 +14,7 @@ A field operator (farmer, agronomist) returns from a drone mission over a plot. 
 
 An initial approach (feeding aerial photos to a vision model and letting it judge the stress itself) was **tested, then discarded**: vision models available on 8 GB do not reliably discriminate stress level from a raw image. The chosen pipeline therefore relies on **pre-quantified data** (classical NDVI computation), and the local LLM sticks to what it does well: **interpreting and rephrasing**.
 
-Full detail (context, feasibility tests, decisions, timeline) is in the [cahier des charges](docs/cahier-des-charges.md), the internal decision journal. The [dossier de soumission](docs/dossier-de-soumission.md) is its narrative version. **The document required by the ADTC rules** (mandated structure: Problem / Design Decisions / Constraints / Benchmarks, with the profiler's official figures) is [`REPORT.md`](REPORT.md), at the repo root.
+Full detail (context, feasibility tests, decisions, timeline) is in the [specification document](docs/specification.md), the internal decision journal. The [submission dossier](docs/submission-dossier.md) is its narrative version. **The document required by the ADTC rules** (mandated structure: Problem / Design Decisions / Constraints / Benchmarks, with the profiler's official figures) is [`REPORT.md`](REPORT.md), at the repo root.
 
 ## Architecture
 
@@ -46,8 +46,8 @@ The pipeline rests on three components, in this order:
 ├── submission.json              # Output of the official ADTC profiler (real run, see REPORT.md)
 ├── model/                       # Receives the downloaded .gguf (not versioned, see .gitignore)
 ├── docs/
-│   ├── cahier-des-charges.md        # Full decision journal, with reasoning
-│   └── dossier-de-soumission.md     # Narrative version, compiled
+│   ├── specification.md             # Full decision journal, with reasoning
+│   └── submission-dossier.md        # Narrative version, compiled
 ├── src/                         # Pipeline code
 │   ├── config.py                # Central settings (model, paths, thresholds, classify_niveau)
 │   ├── models.py, db.py         # Mission history (SQLite)
@@ -103,7 +103,7 @@ the authors), not guessed by a model.
 
 ## Status
 
-- ✅ Cahier des charges finalized, open point #6 resolved (Block 1)
+- ✅ Specification document finalized, open point #6 resolved (Block 1)
 - ✅ Real mission data (extracted from the Idaho dataset) and agronomic corpus validated (Block 2)
 - ✅ Bonus NDVI script implemented and validated: correlation r = 0.89 with annotations (`scripts/compute_ndvi.py`)
 - ✅ End-to-end technical pipeline functional, real data, memory measured and compliant (Block 3)

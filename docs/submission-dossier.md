@@ -1,7 +1,7 @@
 # Submission Dossier — Post-Flight Agronomic Diagnostic Assistant
 
 **Mawudo Aerospace × Africa Deep Tech Challenge 2026**
-**Compiled on August 24, 2026** from the decisions recorded in `docs/cahier-des-charges.md` (v3.0).
+**Compiled on August 24, 2026** from the decisions recorded in `docs/specification.md` (v3.0).
 
 ---
 
@@ -91,7 +91,7 @@ The task given to the model is a **constrained reformulation** — level and tre
 | **Total** | **~4.45 GiB** |
 | Remaining margin on the 8 GiB budget | **~3.5 GiB for the OS** |
 
-**Stability under repeated generations, guaranteed structurally.** A memory-growth risk was identified (Ollama's internal context cache grows after several successive generations within the same server session, eventually causing an OOM confirmed by the kernel during testing). Fixed with a code change (`keep_alive=0` on every model call, `src/llm.py`), which unloads the model immediately after each response: every generation starts from a clean memory state (~3.65 GiB), regardless of how many diagnoses are chained during the demo. Full technical detail: `docs/cahier-des-charges.md` §12.
+**Stability under repeated generations, guaranteed structurally.** A memory-growth risk was identified (Ollama's internal context cache grows after several successive generations within the same server session, eventually causing an OOM confirmed by the kernel during testing). Fixed with a code change (`keep_alive=0` on every model call, `src/llm.py`), which unloads the model immediately after each response: every generation starts from a clean memory state (~3.65 GiB), regardless of how many diagnoses are chained during the demo. Full technical detail: `docs/specification.md` §12.
 
 **Latency.** ~72-85s per diagnosis in pure CPU generation (~8.9 tokens/s decoding). Too slow to chain several live generations without breaking a demo's pace — mitigated with pre-generated diagnoses (`demo/diagnostics_precalcules.md`) available for instant display via `python -m src.main --precalcule`, **with at least one scenario staying live-generated** to prove to the judges it is not pre-recorded. Acknowledged and documented, not hidden.
 
@@ -123,4 +123,4 @@ Source: https://www.webpages.uidaho.edu/vakanski/Multispectral_Images_Dataset.ht
 
 ---
 
-*Document compiled from `docs/cahier-des-charges.md` (v3.0) — refer to it for full decision detail, reasoning, and traceability. The reference document required by the ADTC rules (mandated structure, official profiler benchmarks, robustness tests, West African language attempt) is `REPORT.md` at the repo root — this dossier remains the full narrative version.*
+*Document compiled from `docs/specification.md` (v3.0) — refer to it for full decision detail, reasoning, and traceability. The reference document required by the ADTC rules (mandated structure, official profiler benchmarks, robustness tests, West African language attempt) is `REPORT.md` at the repo root — this dossier remains the full narrative version.*
