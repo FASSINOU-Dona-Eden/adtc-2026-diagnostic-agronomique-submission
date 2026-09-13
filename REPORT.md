@@ -26,8 +26,6 @@
 
 This project derives from one of the use cases explored for Mawudo Aerospace's drones: aerial imagery applied to precision agriculture. Building a local LLM is not the team's usual core business (drones and hardware); this competition was the occasion to develop the exploitable value of data already produced downstream of a drone mission.
 
-Mawudo Aerospace is a flexible, pre-revenue R&D structure, currently developing its hardware and software MVPs. Current leadership has been in place since late Q1 2026. Legally registered as a sole proprietorship (Entreprise Individuelle) since May 2026.
-
 The team was completed specifically for this competition:
 
 - **Dona Eden Fassinou** — founder and CEO of Mawudo Aerospace, in charge of the project's architecture.
